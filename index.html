@@ -5,33 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1220" />
   <title>Nauka niemieckiego – magazyn / logistyka</title>
+
+  <!-- Anti-FOUC: ustaw jasny motyw zanim wczyta się CSS/DOM -->
+  <script>
+    (function(){
+      try{
+        var t = localStorage.getItem("tool_theme_v1") || "dark";
+        if(t==="light"){ document.documentElement.classList.add("pre-light"); }
+      }catch(e){}
+    })();
+  </script>
+
   <style>
+    /* ===== Motyw domyślny (ciemny) ===== */
     :root{
-      --bg:#0b1220; --panel:#121a2b; --card:#16233a; --muted:#90a3b3; --text:#e7eef6; --accent:#6fd1ff; --ok:#2ecc71; --warn:#f39c12; --danger:#e74c3c;
+      --bg:#0b1220; --panel:#121a2b; --card:#16233a; --muted:#90a3b3; --text:#e7eef6;
+      --accent:#6fd1ff; --ok:#2ecc71; --warn:#f39c12; --danger:#e74c3c;
+      --border:#20304e; --border-soft:#253a5d; --chip:#0e1a2e; --chip-ink:#aac0d6; --input:#0f1b2f;
     }
+    /* Wczesne ustawienie jasnego motywu (z <head>) */
+    .pre-light{
+      --bg:#ffffff; --panel:#ffffffee; --card:#fffaf7; --muted:#5b6570; --text:#0e1320;
+      --accent:#0077ff; --ok:#1e9e55; --warn:#b0760c; --danger:#c43b30;
+      --border:#e5e7eb; --border-soft:#e8eaee; --chip:#f6f7fb; --chip-ink:#6b7280; --input:#ffffff;
+    }
+
     *{box-sizing:border-box}
+    html, body { height: 100%; }
     body{
       margin:0;
       font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(180deg,#0b1220,#0b1220 60%,#0e1628);
+      background:linear-gradient(180deg,var(--bg),var(--bg) 60%,#0e1628);
       color:var(--text);
       -webkit-tap-highlight-color: transparent;
+      display:flex; flex-direction:column;
     }
+    /* Aktywacja jasnego motywu po załadowaniu (to samo co .pre-light, ale na body) */
+    body.theme-light{
+      --bg:#ffffff; --panel:#ffffffee; --card:#fffaf7; --muted:#5b6570; --text:#0e1320;
+      --accent:#0077ff; --ok:#1e9e55; --warn:#b0760c; --danger:#c43b30;
+      --border:#e5e7eb; --border-soft:#e8eaee; --chip:#f6f7fb; --chip-ink:#6b7280; --input:#ffffff;
+      background:linear-gradient(180deg,#f7f9fc,#ffffff 60%,#f7f9fc);
+    }
+
     header{
-      position:sticky;top:0;
-      background:rgba(11,18,32,.8);
+      position:sticky;top:0;z-index:10;
+      background:var(--panel);
       backdrop-filter:blur(8px);
-      border-bottom:1px solid #1f2b46;
+      border-bottom:1px solid var(--border);
       padding-top: env(safe-area-inset-top);
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px;}
     h1{margin:6px 0 2px 0;font-size:22px}
     .sub{color:var(--muted);font-size:13px}
     .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-    .card{background:var(--card);border:1px solid #20304e;border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap; align-items:center}
     button,select,input[type="text"],input[type="number"]{
-      border-radius:12px;border:1px solid #294063;background:#0f1b2f;color:var(--text);padding:10px 12px;font-size:14px
+      border-radius:12px;border:1px solid var(--border);background:var(--input);color:var(--text);padding:10px 12px;font-size:14px
     }
     button{cursor:pointer;transition:.2s ease; touch-action: manipulation;}
     button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.25)}
@@ -41,7 +72,14 @@
     .good{border-color:#1f5f3a;background:#123022}
     .warn{border-color:#6b4a13;background:#1e1609}
     .danger{border-color:#6b2323;background:#2b1212}
-    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:#0e1a2e;border:1px solid #253a5d;color:var(--muted);font-size:12px}
+
+    /* Jasne warianty „stanowych” */
+    body.theme-light .accent{background:#eaf3ff;border-color:#bdd7ff}
+    body.theme-light .good{background:#e7f7ee;border-color:#bae8cc}
+    body.theme-light .warn{background:#fff7e8;border-color:#ffe1a6}
+    body.theme-light .danger{background:#ffefef;border-color:#ffd2cf}
+
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border-soft);color:var(--muted);font-size:12px}
     .kpi{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
     .kpi .pill strong{color:var(--text)}
     .row{display:flex;gap:10px}
@@ -53,22 +91,24 @@
     .choice{padding:12px;border-radius:12px;border:1px solid #2a3c60;background:#0f1930;cursor:pointer}
     .choice.correct{border-color:#246b47;background:#122b21}
     .choice.wrong{border-color:#6b2424;background:#2b1212}
+    body.theme-light .choice{background:#ffffff;border-color:var(--border)}
+    body.theme-light .choice.correct{background:#e7f7ee;border-color:#bae8cc}
+    body.theme-light .choice.wrong{background:#ffefef;border-color:#ffd2cf}
+
     .hidden{display:none}
     .small{font-size:12px;color:var(--muted)}
     footer{opacity:.7;font-size:12px;margin-top:18px}
-    .tag{display:inline-block;padding:4px 8px;border:1px solid #2a3c60;border-radius:999px;margin-right:6px;margin-top:6px}
-    .section-title{margin:16px 0 8px 0;font-size:14px;text-transform:uppercase;color:#aac0d6;letter-spacing:.06em}
-    .summary{background:#0e1a2e;border:1px solid #253a5d;border-radius:12px;padding:12px}
+    .tag{display:inline-block;padding:4px 8px;border:1px solid var(--border-soft);border-radius:999px;margin-right:6px;margin-top:6px}
+    .section-title{margin:16px 0 8px 0;font-size:14px;text-transform:uppercase;color:var(--chip-ink);letter-spacing:.06em}
+    .summary{background:var(--chip);border:1px solid var(--border-soft);border-radius:12px;padding:12px}
     .table{width:100%;border-collapse:collapse}
-    .table th,.table td{font-size:12px;border-bottom:1px solid #253a5d;padding:6px 8px;text-align:left}
+    .table th,.table td{font-size:12px;border-bottom:1px solid var(--border-soft);padding:6px 8px;text-align:left}
 
-    html, body { height: 100%; }
-    body { display: flex; flex-direction: column; }
     main.wrap { flex: 1; }
 
     .site-footer{
-      background: rgba(11,18,32,.9);
-      border-top: 1px solid #1f2b46;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
       backdrop-filter: blur(8px);
       padding: 14px 0 max(14px, env(safe-area-inset-bottom));
       color: var(--muted);
@@ -89,7 +129,7 @@
     .site-footer .right a{
       color: var(--text);
       text-decoration: none;
-      border: 1px solid #253a5d;
+      border: 1px solid var(--border-soft);
       padding: 6px 10px;
       border-radius: 999px;
       transition: .2s ease;
@@ -100,9 +140,24 @@
     .site-footer .right a:hover{
       transform: translateY(-1px);
       box-shadow: 0 6px 16px rgba(0,0,0,.25);
-      background: #0e1a2e;
+      background: var(--chip);
     }
     .site-footer .right svg{ width: 16px; height: 16px; flex: 0 0 auto; }
+
+    /* ===== Segment (pigułki) Jasny/Ciemny ===== */
+    .segment{
+      display:inline-flex; background:var(--chip); border:1px solid var(--border-soft);
+      border-radius:999px; padding:4px; gap:4px;
+    }
+    .segment input{ position:absolute; opacity:0; pointer-events:none; }
+    .segment label{
+      user-select:none; cursor:pointer; padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted);
+      display:inline-flex; align-items:center; gap:6px; border:1px solid transparent; transition:.15s ease;
+    }
+    .segment input:checked + label{
+      color:var(--text); background:var(--card); border-color:var(--border-soft); box-shadow:0 2px 8px rgba(0,0,0,.08);
+      transform:translateY(-1px);
+    }
 
     /* RESPONSYWNOŚĆ */
     @media (max-width: 980px){
@@ -113,7 +168,7 @@
       .toolbar{
         overflow:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; gap:8px;
       }
-      .toolbar > *{ flex:0 0 auto }
+      .toolbar > *{ flex:0 0 auto; min-width: 160px }
       button, select, input[type="text"], input[type="number"]{ width:100% }
       .fc{font-size:44px}
       #list{ max-height:40vh !important }
@@ -126,6 +181,7 @@
       .pill{font-size:11px}
       .table th,.table td{font-size:11px}
       .wrap{padding:10px}
+      .toolbar > *{ min-width: unset }
     }
     @media (prefers-reduced-motion: reduce){
       *{transition:none !important; animation:none !important}
@@ -137,26 +193,39 @@
   <header>
     <div class="wrap">
       <h1>Niemiecki dla magazynu / logistyki</h1>
-      <div class="sub">Fiszki, quiz, <strong>PL↔DE</strong>, test egzaminacyjny i statystyki. Wszystko w przeglądarce (LocalStorage).</div>
+      <div class="sub">Fiszki, quiz, <strong>PL↔DE</strong>, test i statystyki (LocalStorage).</div>
     </div>
   </header>
 
   <main class="wrap" style="padding-top:12px">
     <div class="grid">
       <section class="card">
-        <div class="toolbar">
+        <div class="toolbar" role="group" aria-label="Tryby i ustawienia">
+
+          <!-- —— PRZEŁĄCZNIK MOTYWU (pigułki) —— -->
+          <div class="segment" role="tablist" aria-label="Motyw">
+            <input type="radio" name="theme" id="theme-light" value="light" aria-label="Jasny">
+            <label for="theme-light">Jasny</label>
+            <input type="radio" name="theme" id="theme-dark" value="dark" aria-label="Ciemny">
+            <label for="theme-dark">Ciemny</label>
+          </div>
+
           <button id="mode-flash" class="accent">Tryb: Fiszki</button>
           <button id="mode-quiz">Tryb: Quiz (ABC)</button>
           <button id="mode-exam" class="warn">Test egzaminacyjny</button>
-          <select id="direction">
+          <select id="direction" aria-label="Kierunek nauki">
             <option value="EN2PL">Kierunek: DE → PL</option>
             <option value="PL2EN">Kierunek: PL → DE</option>
             <option value="MIX">Kierunek: MIX</option>
           </select>
           <button id="shuffle" title="Wymieszaj">Wymieszaj</button>
           <button id="reset" class="good" title="Zeruj postęp">Zeruj postęp</button>
+
+          <!-- —— PEŁNY EKRAN —— -->
+          <button id="fullscreen" title="Pełny ekran">Pełny ekran</button>
         </div>
-        <div class="kpi">
+
+        <div class="kpi" aria-live="polite">
           <div class="pill">Nauczone: <strong id="stat-known">0</strong></div>
           <div class="pill">Do nauki: <strong id="stat-left">0</strong></div>
           <div class="pill">Skuteczność (quiz): <strong id="stat-acc">0%</strong></div>
@@ -169,7 +238,7 @@
           <div class="fc" id="card-word">—</div>
           <div class="row">
             <button id="show-translation" class="accent">Pokaż tłumaczenie</button>
-            <button id="toggle-sentence">Pokaż zdanie</button>
+            <button id="toggle-sentence">Pokaż wskazówkę</button>
             <button id="mark-known" class="good">Znam to</button>
           </div>
           <div class="big muted" id="card-translation" style="margin-top:10px" aria-live="polite">&nbsp;</div>
@@ -213,9 +282,9 @@
       <aside class="card">
         <h3 style="margin-top:0">Zestaw słów (niemiecki magazyn/logistyka)</h3>
         <div id="tags"></div>
-        <div id="list" style="max-height:240px;overflow:auto;border:1px solid #263a5d;border-radius:12px;padding:8px;margin-top:10px"></div>
+        <div id="list" style="max-height:240px;overflow:auto;border:1px solid var(--border-soft);border-radius:12px;padding:8px;margin-top:10px"></div>
 
-        <h3>Dodaj własne słowo</h3>
+        <h3>Dodaj własne słowo <span class="small">(max 5)</span></h3>
         <div class="row">
           <input id="add-en" type="text" placeholder="niemiecki: np. die Palette" />
           <input id="add-pl" type="text" placeholder="polski: np. paleta" />
@@ -224,13 +293,7 @@
           <input id="add-note" type="text" placeholder="notatka lub zdanie (opcjonalnie)" />
           <button id="add-btn" class="accent">Dodaj</button>
         </div>
-        <div class="small">Twoje słowa zapisują się lokalnie. Możesz je wyeksportować i zaimportować poniżej.</div>
-
-        <h3>Eksport / Import</h3>
-        <div class="row">
-          <button id="export-btn">Eksportuj JSON</button>
-          <input id="import-file" type="file" accept="application/json" />
-        </div>
+        <div class="small" id="custom-info">Dodane: <span id="custom-count">0</span>/5</div>
 
         <div class="section-title">Statystyki (ostatnie 7 dni)</div>
         <div class="summary" id="stats"></div>
@@ -238,6 +301,53 @@
       </aside>
     </div>
   </main>
+
+  <!-- Motyw + Fullscreen (osobny skrypt, odporny na błędy w module głównym) -->
+  <script>
+    const THEME_KEY = "tool_theme_v1";
+
+    function applyTheme(theme){
+      if(theme === "light"){
+        document.body.classList.add("theme-light");
+        setThemeColor("#ffffff");
+      } else {
+        document.body.classList.remove("theme-light");
+        setThemeColor("#0b1220");
+      }
+      // odśwież radio
+      const light = document.getElementById('theme-light');
+      const dark  = document.getElementById('theme-dark');
+      if(light && dark){ light.checked = theme==="light"; dark.checked = theme!=="light"; }
+    }
+    function setThemeColor(hex){
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if(meta) meta.setAttribute('content', hex);
+    }
+    function loadTheme(){ try{ return localStorage.getItem(THEME_KEY) || "dark"; }catch(e){ return "dark"; } }
+    function saveTheme(t){ try{ localStorage.setItem(THEME_KEY, t); }catch(e){} }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // Ustaw motyw z pamięci
+      applyTheme(loadTheme());
+
+      // Obsługa przełącznika
+      document.getElementById('theme-light').addEventListener('change', ()=>{ applyTheme('light'); saveTheme('light'); });
+      document.getElementById('theme-dark').addEventListener('change', ()=>{ applyTheme('dark');  saveTheme('dark');  });
+
+      // Fullscreen toggle + etykieta
+      const fsBtn = document.getElementById('fullscreen');
+      function syncFsButton(){ fsBtn.textContent = document.fullscreenElement ? 'Wyjście z pełnego ekranu' : 'Pełny ekran'; }
+      fsBtn.addEventListener('click', async ()=>{
+        try{
+          if(!document.fullscreenElement){ await document.documentElement.requestFullscreen(); }
+          else { await document.exitFullscreen(); }
+        }catch(e){ alert('Przeglądarka zablokowała pełny ekran.'); }
+        syncFsButton();
+      });
+      document.addEventListener('fullscreenchange', syncFsButton);
+      syncFsButton();
+    });
+  </script>
 
   <script defer>
     // ====== ZESTAW: 50 słów DE-PL + 30 zdań ======
@@ -304,42 +414,31 @@
       { en:"der Auftrag", pl:"zlecenie", tag:"safety" },
 
       // ===== 30 zdań (tag: sentences) =====
-      // Przyjęcie towaru
       { en:"Die Lieferung ist um neun Uhr angekommen.", pl:"Dostawa przyjechała o dziewiątej.", tag:"sentences" },
       { en:"Bitte prüfen Sie den Lieferschein und die Menge.", pl:"Proszę sprawdzić list przewozowy i ilość.", tag:"sentences" },
       { en:"Die Ware ist unbeschädigt und vollständig.", pl:"Towar jest nienaruszony i kompletny.", tag:"sentences" },
       { en:"Hier fehlt eine Palette.", pl:"Brakuje tutaj jednej palety.", tag:"sentences" },
       { en:"Wir buchen den Wareneingang im System.", pl:"Księgujemy przyjęcie w systemie.", tag:"sentences" },
-
-      // Składowanie
       { en:"Lagere die Kartons im Hochregal, Reihe B, Platz 12.", pl:"Odłóż kartony do regału wysokiego, rząd B, miejsce 12.", tag:"sentences" },
       { en:"Achte auf das zulässige Maximalgewicht.", pl:"Zwróć uwagę na dopuszczalną maksymalną wagę.", tag:"sentences" },
       { en:"Benutze für diese Last den Schubmaststapler.", pl:"Do tego ładunku użyj reach trucka.", tag:"sentences" },
       { en:"Stell die Palette auf die Rampe.", pl:"Postaw paletę na rampie.", tag:"sentences" },
       { en:"Hol bitte die Palette vom Warenausgang.", pl:"Przywieź proszę paletę ze strefy wydań.", tag:"sentences" },
-
-      // Kompletacja i pakowanie
-      { en:"Kommissioniere fünf Stück nach Auftrag 1034.", pl:"Skonpletuj pięć sztuk do zlecenia 1034.", tag:"sentences" },
+      { en:"Kommissioniere fünf Stück nach Auftrag 1034.", pl:"Skompletuj pięć sztuk do zlecenia 1034.", tag:"sentences" },
       { en:"Scanne jede Artikelnummer vor dem Entnehmen.", pl:"Skanuj każdy numer artykułu przed pobraniem.", tag:"sentences" },
       { en:"Lege die Ware in die Kiste mit dem grünen Label.", pl:"Włóż towar do skrzyni z zieloną etykietą.", tag:"sentences" },
       { en:"Bitte verpacke stoßfest und fülle den Leerraum mit Papier.", pl:"Zapakuj amortyzująco i wypełnij puste przestrzenie papierem.", tag:"sentences" },
       { en:"Das Bruttogewicht steht auf dem Etikett.", pl:"Waga brutto jest na etykiecie.", tag:"sentences" },
-
-      // Wysyłka
       { en:"Die Sendung muss heute bis sechzehn Uhr raus.", pl:"Przesyłka musi wyjść dziś do szesnastej.", tag:"sentences" },
       { en:"Der Spediteur wartet an der Ladezone.", pl:"Przewoźnik czeka w strefie załadunku.", tag:"sentences" },
       { en:"Bitte sichere die Palette mit Klebeband.", pl:"Proszę zabezpiecz paletę taśmą klejącą.", tag:"sentences" },
       { en:"Die Palette ist fertig zum Abholen.", pl:"Paleta jest gotowa do odebrania.", tag:"sentences" },
       { en:"Verwende den Marker, um die Kiste zu beschriften.", pl:"Użyj markera, żeby opisać skrzynię.", tag:"sentences" },
-
-      // Komunikacja z wózkowym
       { en:"Kannst du mir bitte die Palette in Reihe C bringen?", pl:"Możesz mi proszę podstawić paletę do rzędu C?", tag:"sentences" },
       { en:"Heb die Palette vorsichtig an, sie ist instabil.", pl:"Podnieś paletę ostrożnie, jest niestabilna.", tag:"sentences" },
       { en:"Fahr bitte langsam, der Gang ist eng.", pl:"Jedź proszę powoli, korytarz jest wąski.", tag:"sentences" },
       { en:"Die Palette ist schon geschlossen.", pl:"Paleta jest już zamknięta.", tag:"sentences" },
       { en:"Hast du noch Ersatzklingen für das Cuttermesser?", pl:"Masz jeszcze zapasowe ostrza do nożyka?", tag:"sentences" },
-
-      // Inwentaryzacja i kontrola
       { en:"Wir führen heute eine Stichprobenprüfung durch.", pl:"Dziś robimy kontrolę wyrywkową.", tag:"sentences" },
       { en:"Bitte zähle den Bestand im Regal C vollständig.", pl:"Proszę policz stan w regale C w całości.", tag:"sentences" },
       { en:"Es gibt eine Abweichung zwischen System und Realität.", pl:"Jest odchyłka między systemem a rzeczywistością.", tag:"sentences" },
@@ -353,6 +452,7 @@
     const LS_STATS = "de_stats_v1";
     const LS_DAILY = "de_daily_v1";
     const LS_PREFS = "de_prefs_v1";
+    const CUSTOM_LIMIT = 5;
 
     // Preferencje (kierunek, widoczność zdań)
     let prefs = JSON.parse(localStorage.getItem(LS_PREFS) || '{"direction":"EN2PL","showExample":false}');
@@ -361,7 +461,7 @@
     function mergeOldIntoSeed(oldArr){
       if(!Array.isArray(oldArr)) return seed.map(w=>({...w, known:false}));
       const key = s => `${(s.en||'').toLowerCase()}__${(s.pl||'').toLowerCase()}`;
-      const map = new Map(seed.map(x=>[key(x), {...x, known:false}]));
+      const map = new Map(seed.map(x=>[key(x), {...x, known:false}])); /* (fix) poprawna składnia */
       oldArr.forEach(x=>{
         const k = key(x);
         if(map.has(k)){ const base = map.get(k); map.set(k, {...base, known: !!x.known}); }
@@ -412,7 +512,7 @@
       const items = data
         .filter(w => !filterTag || w.tag===filterTag)
         .sort((a,b)=> a.en.localeCompare(b.en));
-      listEl.innerHTML = items.map((w,i)=>{
+      listEl.innerHTML = items.map((w)=>{
         const idx = data.indexOf(w);
         return `<div class="tag" data-idx="${idx}" title="Kliknij, aby przełączyć status">${w.known?"✅":"⬜"} ${w.en} — ${w.pl}</div>`
       }).join("");
@@ -434,6 +534,7 @@
       const today = daily[k] || {learned:0, correct:0};
       $("#stat-today").textContent = today.learned + today.correct;
       $("#stat-week").textContent = sumLastNDays(7);
+      updateCustomCounter();
     }
 
     function sumLastNDays(n){
@@ -468,14 +569,13 @@
       if(mode==='flash') renderCard();
     }
 
-    // Zdanie przykładowe (dla pojedynczych haseł – w DE zestawie domyślnie brak, ale działa dla 'sentences')
+    // Zdanie / wskazówka
     function renderExample(w){
       const el = $("#card-example");
       if(!w || !showExample){ el.textContent = ""; return; }
       if(w.exEN && w.exPL){
         el.textContent = (direction==="PL2EN"? `${w.exPL} → ${w.exEN}` : `${w.exEN} → ${w.exPL}`);
       } else if(w.tag === "sentences"){
-        // Dla kart typu 'zdania' wyświetlamy to samo co na fiszce (już całe zdanie)
         el.textContent = "Ćwicz całe zdanie – zwróć uwagę na szyk i przyimki.";
       } else {
         el.textContent = "Brak przykładowego zdania.";
@@ -483,7 +583,7 @@
     }
     function updateSentenceButton(){
       const btn = $("#toggle-sentence");
-      if(btn) btn.textContent = showExample ? "Ukryj zdanie" : "Pokaż wskazówkę";
+      if(btn) btn.textContent = showExample ? "Ukryj wskazówkę" : "Pokaż wskazówkę";
     }
 
     // FISZKI
@@ -551,6 +651,7 @@
       const {q, prompt, optionsTexts, correctText} = makeQuestion();
       $("#quiz-q").textContent = (prompt===q.en) ? `Co znaczy: „${q.en}”?` : `Jak po niemiecku: „${q.pl}”?`;
       const box = $("#quiz-choices"); box.innerHTML = "";
+      $("#quiz-feedback").textContent = "";
       optionsTexts.forEach(text=>{
         const div = document.createElement('div');
         div.className = 'choice';
@@ -633,6 +734,16 @@
       examState = null;
     }
 
+    // DODATKOWE: licznik słów własnych i limit
+    function countCustom(){ return data.filter(w=>w.tag==='custom').length; }
+    function updateCustomCounter(){
+      const c = countCustom();
+      const span = $("#custom-count");
+      if(span) span.textContent = c;
+      const btn = $("#add-btn");
+      if(btn) btn.disabled = c >= CUSTOM_LIMIT;
+    }
+
     // Zdarzenia
     document.addEventListener('click', (e)=>{
       const tag = e.target.getAttribute('data-tag');
@@ -666,7 +777,13 @@
       if(e.target.matches('#mode-quiz')) showQuiz();
       if(e.target.matches('#mode-exam')){ $("#exam").classList.remove('hidden'); $("#flashcards").classList.add('hidden'); $("#quiz").classList.add('hidden'); mode='exam'; }
       if(e.target.matches('#shuffle')){ data.sort(()=>Math.random()-0.5); renderList(); if(mode==='flash') renderCard(); saveData(data); }
-      if(e.target.matches('#reset')){ if(confirm('Zerować status nauki i statystyki?')){ data.forEach(w=>w.known=false); stats={}; daily={}; saveData(data); saveStats(stats); saveDaily(daily); updateKPI(); renderList(); if(mode==='flash') renderCard(); renderDailyStats(); }}
+      if(e.target.matches('#reset')){
+        if(confirm('Zerować status nauki i statystyki?')){
+          data.forEach(w=>w.known=false); stats={}; daily={};
+          saveData(data); saveStats(stats); saveDaily(daily);
+          updateKPI(); renderList(); if(mode==='flash') renderCard(); renderDailyStats();
+        }
+      }
       if(e.target.closest('#list .tag')){
         const el = e.target.closest('#list .tag');
         const i = +el.dataset.idx; data[i].known = !data[i].known; saveData(data); updateKPI(); renderList();
@@ -675,40 +792,29 @@
       if(e.target.matches('#exam-cancel')){ examState=null; $("#exam-area").classList.add('hidden'); $("#exam-cancel").classList.add('hidden'); $("#exam-summary").classList.add('hidden'); }
     });
 
+    // Zmiana kierunku – FIX
+    document.addEventListener('change', (e)=>{
+      if(e.target && e.target.id === 'direction'){
+        setDirection(e.target.value);
+      }
+    });
+
+    // Dodawanie własnych słów – z limitem 5
     $("#add-btn").onclick = ()=>{
+      const current = countCustom();
+      if(current >= CUSTOM_LIMIT){
+        alert(`Osiągnięto limit ${CUSTOM_LIMIT} własnych słów.`);
+        updateCustomCounter();
+        return;
+      }
       const en = $("#add-en").value.trim();
       const pl = $("#add-pl").value.trim();
       const note = $("#add-note").value.trim();
       if(!en || !pl){ alert('Podaj obie wersje: niemiecki i polski.'); return; }
       const extras = note ? (note.includes(' ')? {exEN: note, exPL: ''} : {}) : {};
       data.push({en, pl, tag:'custom', known:false, ...extras});
-      saveData(data); renderTags(); renderList(); updateKPI();
+      saveData(data); renderTags(); renderList(); updateKPI(); updateCustomCounter();
       $("#add-en").value = $("#add-pl").value = $("#add-note").value = "";
-    };
-
-    $("#export-btn").onclick = ()=>{
-      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'slownictwo_niemiecki_magazyn.json'; a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    $("#import-file").onchange = ev =>{
-      const file = ev.target.files[0]; if(!file) return;
-      const rdr = new FileReader();
-      rdr.onload = () => {
-        try{
-          const arr = JSON.parse(rdr.result);
-          if(Array.isArray(arr)){
-            const key = s => `${(s.en||'').toLowerCase()}__${(s.pl||'').toLowerCase()}`;
-            const map = new Map(data.map(x=>[key(x),x]));
-            arr.forEach(x=>{ if(!map.has(key(x))) data.push({...x, known:false}); });
-            saveData(data); renderTags(); renderList(); updateKPI();
-          } else { alert('Nieprawidłowy plik JSON.'); }
-        }catch(e){ alert('Błąd odczytu pliku.'); }
-      };
-      rdr.readAsText(file);
     };
 
     // Start
