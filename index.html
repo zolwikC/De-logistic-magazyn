@@ -132,6 +132,25 @@
     text-align: center;
   }
 }
+/* === UKRYWANIE GÓRNEGO PASKA PRZY PRZEWIJANIU === */
+@media (max-width: 768px) {
+  .lt-lang-de .ltde-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    z-index: 1000;
+  }
+  .lt-lang-de .ltde-header.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  body {
+    padding-top: 80px; /* wysokość nagłówka, żeby treść nie była pod spodem */
+  }
+}
+
 </style>
 </head>
 <body>
@@ -993,5 +1012,36 @@ document.getElementById('list').addEventListener('click', (e)=>{
   showFlash();
 })();
 </script>
+<script>
+  // === UKRYWANIE PASKA PRZY PRZEWIJANIU ===
+  document.addEventListener('DOMContentLoaded', () => {
+    const header = document.querySelector('.ltde-header');
+    if (!header) return;
+
+    let lastScrollTop = 0;
+    let ticking = false;
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+          if (currentScroll > lastScrollTop + 15) {
+            // użytkownik przewija w dół → chowamy pasek
+            header.classList.add('hidden');
+          } else if (currentScroll < lastScrollTop - 15) {
+            // użytkownik przewija w górę → pokazujemy pasek
+            header.classList.remove('hidden');
+          }
+
+          lastScrollTop = Math.max(0, currentScroll);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
