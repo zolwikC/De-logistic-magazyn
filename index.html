@@ -1,839 +1,925 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b1220" />
-  <title>Nauka niemieckiego – magazyn / logistyka</title>
-
-  <!-- Anti-FOUC: ustaw jasny motyw zanim wczyta się CSS/DOM -->
-  <script>
-    (function(){
-      try{
-        var t = localStorage.getItem("tool_theme_v1") || "dark";
-        if(t==="light"){ document.documentElement.classList.add("pre-light"); }
-      }catch(e){}
-    })();
-  </script>
-
-  <style>
-    /* ===== Motyw domyślny (ciemny) ===== */
-    :root{
-      --bg:#0b1220; --panel:#121a2b; --card:#16233a; --muted:#90a3b3; --text:#e7eef6;
-      --accent:#6fd1ff; --ok:#2ecc71; --warn:#f39c12; --danger:#e74c3c;
-      --border:#20304e; --border-soft:#253a5d; --chip:#0e1a2e; --chip-ink:#aac0d6; --input:#0f1b2f;
-    }
-    /* Wczesne ustawienie jasnego motywu (z <head>) */
-    .pre-light{
-      --bg:#ffffff; --panel:#ffffffee; --card:#fffaf7; --muted:#5b6570; --text:#0e1320;
-      --accent:#0077ff; --ok:#1e9e55; --warn:#b0760c; --danger:#c43b30;
-      --border:#e5e7eb; --border-soft:#e8eaee; --chip:#f6f7fb; --chip-ink:#6b7280; --input:#ffffff;
-    }
-
-    *{box-sizing:border-box}
-    html, body { height: 100%; }
-    body{
-      margin:0;
-      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(180deg,var(--bg),var(--bg) 60%,#0e1628);
-      color:var(--text);
-      -webkit-tap-highlight-color: transparent;
-      display:flex; flex-direction:column;
-    }
-    /* Aktywacja jasnego motywu po załadowaniu (to samo co .pre-light, ale na body) */
-    body.theme-light{
-      --bg:#ffffff; --panel:#ffffffee; --card:#fffaf7; --muted:#5b6570; --text:#0e1320;
-      --accent:#0077ff; --ok:#1e9e55; --warn:#b0760c; --danger:#c43b30;
-      --border:#e5e7eb; --border-soft:#e8eaee; --chip:#f6f7fb; --chip-ink:#6b7280; --input:#ffffff;
-      background:linear-gradient(180deg,#f7f9fc,#ffffff 60%,#f7f9fc);
-    }
-
-    header{
-      position:sticky;top:0;z-index:10;
-      background:var(--panel);
-      backdrop-filter:blur(8px);
-      border-bottom:1px solid var(--border);
-      padding-top: env(safe-area-inset-top);
-    }
-    .wrap{max-width:1100px;margin:0 auto;padding:16px;}
-    h1{margin:6px 0 2px 0;font-size:22px}
-    .sub{color:var(--muted);font-size:13px}
-    .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap; align-items:center}
-    button,select,input[type="text"],input[type="number"]{
-      border-radius:12px;border:1px solid var(--border);background:var(--input);color:var(--text);padding:10px 12px;font-size:14px
-    }
-    button{cursor:pointer;transition:.2s ease; touch-action: manipulation;}
-    button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.25)}
-    button:active{transform:none; box-shadow:none; filter:brightness(1.08);}
-    .accent{border-color:#2a5775;background:#11344a}
-    .accent:hover{background:#0f2b3d}
-    .good{border-color:#1f5f3a;background:#123022}
-    .warn{border-color:#6b4a13;background:#1e1609}
-    .danger{border-color:#6b2323;background:#2b1212}
-
-    /* Jasne warianty „stanowych” */
-    body.theme-light .accent{background:#eaf3ff;border-color:#bdd7ff}
-    body.theme-light .good{background:#e7f7ee;border-color:#bae8cc}
-    body.theme-light .warn{background:#fff7e8;border-color:#ffe1a6}
-    body.theme-light .danger{background:#ffefef;border-color:#ffd2cf}
-
-    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border-soft);color:var(--muted);font-size:12px}
-    .kpi{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-    .kpi .pill strong{color:var(--text)}
-    .row{display:flex;gap:10px}
-    .row > *{flex:1}
-    .fc{font-size:54px;text-align:center;margin:16px 0;word-break:break-word}
-    .big{font-size:20px}
-    .muted{color:var(--muted)}
-    .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-    .choice{padding:12px;border-radius:12px;border:1px solid #2a3c60;background:#0f1930;cursor:pointer}
-    .choice.correct{border-color:#246b47;background:#122b21}
-    .choice.wrong{border-color:#6b2424;background:#2b1212}
-    body.theme-light .choice{background:#ffffff;border-color:var(--border)}
-    body.theme-light .choice.correct{background:#e7f7ee;border-color:#bae8cc}
-    body.theme-light .choice.wrong{background:#ffefef;border-color:#ffd2cf}
-
-    .hidden{display:none}
-    .small{font-size:12px;color:var(--muted)}
-    footer{opacity:.7;font-size:12px;margin-top:18px}
-    .tag{display:inline-block;padding:4px 8px;border:1px solid var(--border-soft);border-radius:999px;margin-right:6px;margin-top:6px}
-    .section-title{margin:16px 0 8px 0;font-size:14px;text-transform:uppercase;color:var(--chip-ink);letter-spacing:.06em}
-    .summary{background:var(--chip);border:1px solid var(--border-soft);border-radius:12px;padding:12px}
-    .table{width:100%;border-collapse:collapse}
-    .table th,.table td{font-size:12px;border-bottom:1px solid var(--border-soft);padding:6px 8px;text-align:left}
-
-    main.wrap { flex: 1; }
-
-    .site-footer{
-      background: var(--panel);
-      border-top: 1px solid var(--border);
-      backdrop-filter: blur(8px);
-      padding: 14px 0 max(14px, env(safe-area-inset-bottom));
-      color: var(--muted);
-      font-size: 13px;
-      opacity: 1 !important;
-      margin-top: 0;
-    }
-    .site-footer .inner{
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: space-between;
-    }
-    .site-footer .left{ color: var(--muted); }
-    .site-footer .right a{
-      color: var(--text);
-      text-decoration: none;
-      border: 1px solid var(--border-soft);
-      padding: 6px 10px;
-      border-radius: 999px;
-      transition: .2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .site-footer .right a:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0,0,0,.25);
-      background: var(--chip);
-    }
-    .site-footer .right svg{ width: 16px; height: 16px; flex: 0 0 auto; }
-
-    /* ===== Segment (pigułki) Jasny/Ciemny ===== */
-    .segment{
-      display:inline-flex; background:var(--chip); border:1px solid var(--border-soft);
-      border-radius:999px; padding:4px; gap:4px;
-    }
-    .segment input{ position:absolute; opacity:0; pointer-events:none; }
-    .segment label{
-      user-select:none; cursor:pointer; padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted);
-      display:inline-flex; align-items:center; gap:6px; border:1px solid transparent; transition:.15s ease;
-    }
-    .segment input:checked + label{
-      color:var(--text); background:var(--card); border-color:var(--border-soft); box-shadow:0 2px 8px rgba(0,0,0,.08);
-      transform:translateY(-1px);
-    }
-
-    /* RESPONSYWNOŚĆ */
-    @media (max-width: 980px){
-      .wrap{padding:12px}
-      .grid{grid-template-columns:1fr}
-      .choices{grid-template-columns:1fr}
-      .row{flex-direction:column}
-      .toolbar{
-        overflow:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; gap:8px;
-      }
-      .toolbar > *{ flex:0 0 auto; min-width: 160px }
-      button, select, input[type="text"], input[type="number"]{ width:100% }
-      .fc{font-size:44px}
-      #list{ max-height:40vh !important }
-    }
-    @media (max-width: 640px){
-      h1{font-size:20px}
-      .sub{font-size:12px}
-      .fc{font-size:36px}
-      .big{font-size:18px}
-      .pill{font-size:11px}
-      .table th,.table td{font-size:11px}
-      .wrap{padding:10px}
-      .toolbar > *{ min-width: unset }
-    }
-    @media (prefers-reduced-motion: reduce){
-      *{transition:none !important; animation:none !important}
-    }
-    #list .tag{display:block; line-height:1.4; padding:8px 10px;}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LearnEnglish for Developers — dev.to + Work English</title>
+<meta name="theme-color" content="#0b1220" />
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121a2b; --card:#16233a; --muted:#90a3b3; --text:#e7eef6;
+    --accent:#6fd1ff; --border:#20304e; --soft:#253a5d; --chip:#0e1a2e; --good:#2ecc71; --bad:#ff5d5d;
+  }
+  body.light{
+    --bg:#ffffff; --panel:#ffffffee; --card:#f7f9ff; --muted:#5b6570; --text:#0e1320;
+    --accent:#0077ff; --border:#e6e8ee; --soft:#eef0f5; --chip:#f4f6fb; --good:#15a34a; --bad:#e11d48;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg) 60%,#0e1628);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  body.light{background:linear-gradient(180deg,#f7f9fc,#fff 60%,#f7f9fc)}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  header{position:sticky;top:0;background:var(--panel);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10}
+  h1{margin:8px 0 2px;font-size:22px}
+  .sub{color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  select,button,input{border:1px solid var(--border);border-radius:12px;background:#0f1b2f;color:var(--text);padding:10px 12px;font-size:14px}
+  body.light select,body.light button,body.light input{background:#fff}
+  button{cursor:pointer;transition:.15s ease}
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  .segment{display:inline-flex;background:var(--chip);border:1px solid var(--soft);border-radius:999px;padding:4px;gap:4px}
+  .segment input{position:absolute;opacity:0}
+  .segment label{padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);cursor:pointer;border:1px solid transparent}
+  .segment input:checked+label{color:var(--text);background:var(--card);border-color:var(--soft);box-shadow:0 2px 8px rgba(0,0,0,.08);transform:translateY(-1px)}
+  .kpi{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--soft);color:var(--muted);font-size:12px}
+  .pill strong{color:var(--text)}
+  .tabs{display:flex;gap:6px;margin-top:8px}
+  .tab{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#0f1b2f}
+  .active{outline:2px solid var(--accent)}
+  .fc{font-size:48px;text-align:center;margin:16px 0;word-break:break-word}
+  .big{font-size:20px}
+  .small{font-size:12px;color:var(--muted)}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .choice{padding:12px;border-radius:12px;border:1px solid #2a3c60;background:#0f1930;cursor:pointer}
+  .choice.correct{border-color:#246b47;background:#122b21}
+  .choice.wrong{border-color:#6b2424;background:#2b1212}
+  body.light .choice{background:#fff;border-color:var(--border)}
+  body.light .choice.correct{background:#e7f7ee;border-color:#bae8cc}
+  body.light .choice.wrong{background:#ffefef;border-color:#ffd2cf}
+  .summary{background:var(--chip);border:1px solid var(--soft);border-radius:12px;padding:12px}
+  .table{width:100%;border-collapse:collapse}
+  .table th,.table td{font-size:12px;border-bottom:1px solid var(--soft);padding:6px 8px;text-align:left}
+  .list{max-height:240px;overflow:auto;border:1px solid var(--soft);border-radius:12px;padding:8px;margin-top:10px}
+  .tag{display:block;padding:8px 10px;border:1px solid var(--soft);border-radius:10px;margin-bottom:6px}
+  .tag.known{opacity:.7;text-decoration:line-through}
+  .spark{display:flex;gap:2px;align-items:flex-end;height:40px}
+  .bar{flex:1;background:linear-gradient(180deg,var(--accent),transparent);border-radius:3px}
+  .goodtxt{color:var(--good)} .badtxt{color:var(--bad)}
+  footer.site{background:var(--panel);border-top:1px solid var(--border);backdrop-filter:blur(8px);padding:14px 0;color:var(--muted);font-size:13px;margin-top:10px}
+  .site .inner{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}.choices{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
   <header>
     <div class="wrap">
-      <h1>Niemiecki dla magazynu / logistyki</h1>
-      <div class="sub">Fiszki, quiz, <strong>PL↔DE</strong>, test i statystyki (LocalStorage).</div>
+      <h1>LearnEnglish for Developers</h1>
+      <div class="sub">Pakiety: <strong>dev.to English</strong> + <strong>Workplace English</strong> (+ Python/GitHub/QA). Fiszki, Quiz ABCD, historia i statystyki.</div>
     </div>
   </header>
 
   <main class="wrap" style="padding-top:12px">
     <div class="grid">
       <section class="card">
-        <div class="toolbar" role="group" aria-label="Tryby i ustawienia">
+        <div class="toolbar">
+          <!-- Pakiety z ikoną i opisem -->
+          <select id="package" title="Wybierz pakiet"></select>
 
-          <!-- —— PRZEŁĄCZNIK MOTYWU (pigułki) —— -->
+          <!-- Motyw -->
           <div class="segment" role="tablist" aria-label="Motyw">
-            <input type="radio" name="theme" id="theme-light" value="light" aria-label="Jasny">
-            <label for="theme-light">Jasny</label>
-            <input type="radio" name="theme" id="theme-dark" value="dark" aria-label="Ciemny">
-            <label for="theme-dark">Ciemny</label>
+            <input type="radio" name="theme" id="t-light" value="light"><label for="t-light">☀️ Jasny</label>
+            <input type="radio" name="theme" id="t-dark"  value="dark"><label for="t-dark">🌙 Ciemny</label>
           </div>
 
-          <button id="mode-flash" class="accent">Tryb: Fiszki</button>
-          <button id="mode-quiz">Tryb: Quiz (ABC)</button>
-          <button id="mode-exam" class="warn">Test egzaminacyjny</button>
-          <select id="direction" aria-label="Kierunek nauki">
-            <option value="EN2PL">Kierunek: DE → PL</option>
-            <option value="PL2EN">Kierunek: PL → DE</option>
-            <option value="MIX">Kierunek: MIX</option>
-          </select>
-          <button id="shuffle" title="Wymieszaj">Wymieszaj</button>
-          <button id="reset" class="good" title="Zeruj postęp">Zeruj postęp</button>
+          <!-- Tryby -->
+          <div class="tabs" role="tablist">
+            <button class="tab active" id="tab-flash">Fiszki</button>
+            <button class="tab" id="tab-quiz">Quiz ABCD</button>
+            <button class="tab" id="tab-stats">Statystyki</button>
+          </div>
 
-          <!-- —— PEŁNY EKRAN —— -->
-          <button id="fullscreen" title="Pełny ekran">Pełny ekran</button>
+          <button id="shuffle">Wymieszaj</button>
+          <button id="reset">Zeruj postęp</button>
         </div>
 
+        <!-- KPI -->
         <div class="kpi" aria-live="polite">
-          <div class="pill">Nauczone: <strong id="stat-known">0</strong></div>
-          <div class="pill">Do nauki: <strong id="stat-left">0</strong></div>
-          <div class="pill">Skuteczność (quiz): <strong id="stat-acc">0%</strong></div>
-          <div class="pill">Dziś: <strong id="stat-today">0</strong></div>
-          <div class="pill">Ostatnie 7 dni: <strong id="stat-week">0</strong></div>
+          <div class="pill">Nauczone: <strong id="k-known">0</strong></div>
+          <div class="pill">Do nauki: <strong id="k-left">0</strong></div>
+          <div class="pill">Skuteczność (quiz): <strong id="k-acc">0%</strong></div>
+          <div class="pill">Sesje (7 dni): <strong id="k-week">0</strong></div>
         </div>
 
-        <!-- FLASHCARDS -->
-        <div id="flashcards">
+        <!-- FISZKI -->
+        <div id="view-flash">
           <div class="fc" id="card-word">—</div>
-          <div class="row">
-            <button id="show-translation" class="accent">Pokaż tłumaczenie</button>
-            <button id="toggle-sentence">Pokaż wskazówkę</button>
-            <button id="mark-known" class="good">Znam to</button>
+          <div class="big" id="card-translation" style="min-height:28px">&nbsp;</div>
+          <div class="small" id="card-example" style="min-height:18px">&nbsp;</div>
+          <div class="toolbar" style="margin-top:8px">
+            <select id="direction" title="Kierunek">
+              <option value="EN2PL">EN → PL</option>
+              <option value="PL2EN">PL → EN</option>
+              <option value="MIX">MIX</option>
+            </select>
+            <button id="show">Pokaż tłumaczenie</button>
+            <button id="hint">Pokaż wskazówkę</button>
+            <button id="know" style="border-color:#1f5f3a;background:#123022">Znam to</button>
+            <button id="next">Dalej</button>
           </div>
-          <div class="big muted" id="card-translation" style="margin-top:10px" aria-live="polite">&nbsp;</div>
-          <div class="small" id="card-example" style="margin-top:8px" aria-live="polite">&nbsp;</div>
         </div>
 
         <!-- QUIZ -->
-        <div id="quiz" class="hidden">
+        <div id="view-quiz" class="summary" style="display:none">
           <div class="big" id="quiz-q">&nbsp;</div>
           <div class="choices" id="quiz-choices"></div>
           <div class="small" id="quiz-feedback" style="margin-top:8px" aria-live="polite"></div>
+          <div class="small" id="quiz-progress" style="margin-top:4px"></div>
+          <div class="toolbar" style="margin-top:8px">
+            <button id="quiz-next">Następne pytanie</button>
+            <button id="quiz-10">Seria 10 pytań</button>
+            <button id="quiz-20">Seria 20 pytań</button>
+          </div>
         </div>
 
-        <!-- EXAM -->
-        <div id="exam" class="hidden">
-          <div class="section-title">Ustawienia testu</div>
-          <div class="row" style="margin-bottom:8px">
-            <label style="flex:1">Liczba pytań <input id="exam-count" type="number" min="5" max="50" value="10" style="width:100%"></label>
-            <label style="flex:1">
-              Kierunek
-              <select id="exam-direction" style="width:100%">
-                <option value="EN2PL">DE → PL</option>
-                <option value="PL2EN">PL → DE</option>
-                <option value="MIX" selected>MIX</option>
-              </select>
-            </label>
-          </div>
-          <div class="row">
-            <button id="exam-start" class="accent">Start testu</button>
-            <button id="exam-cancel" class="danger hidden">Przerwij</button>
-          </div>
-          <div id="exam-area" class="hidden" style="margin-top:12px">
-            <div class="big" id="exam-q">&nbsp;</div>
-            <div class="choices" id="exam-choices"></div>
-            <div class="small" id="exam-progress" style="margin-top:8px"></div>
-          </div>
-          <div id="exam-summary" class="hidden" style="margin-top:12px"></div>
+        <!-- STATYSTYKI -->
+        <div id="view-stats" style="display:none">
+          <div class="section-title small">Podsumowanie</div>
+          <div class="summary" id="stats-summary"></div>
+
+          <div class="section-title small" style="margin-top:10px">Aktywność: ostatnie 7 dni</div>
+          <div id="spark" class="spark"></div>
+
+          <div class="section-title small" style="margin-top:10px">Historia sesji (ostatnie 30)</div>
+          <div id="history"></div>
         </div>
       </section>
 
       <aside class="card">
-        <h3 style="margin-top:0">Zestaw słów (niemiecki magazyn/logistyka)</h3>
+        <h3 style="margin:0">Słownik pakietu</h3>
         <div id="tags"></div>
-        <div id="list" style="max-height:240px;overflow:auto;border:1px solid var(--border-soft);border-radius:12px;padding:8px;margin-top:10px"></div>
-
-        <h3>Dodaj własne słowo <span class="small">(max 5)</span></h3>
-        <div class="row">
-          <input id="add-en" type="text" placeholder="niemiecki: np. die Palette" />
-          <input id="add-pl" type="text" placeholder="polski: np. paleta" />
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="add-note" type="text" placeholder="notatka lub zdanie (opcjonalnie)" />
-          <button id="add-btn" class="accent">Dodaj</button>
-        </div>
-        <div class="small" id="custom-info">Dodane: <span id="custom-count">0</span>/5</div>
-
-        <div class="section-title">Statystyki (ostatnie 7 dni)</div>
-        <div class="summary" id="stats"></div>
-        <footer>Wskazówka: kliknij słowo na liście, aby oznaczyć/odznaczyć jako nauczone.</footer>
+        <div id="list" class="list"></div>
+        <div class="small" style="margin-top:6px">Kliknij słowo, aby oznaczyć/odznaczyć jako nauczone.</div>
       </aside>
     </div>
   </main>
 
-  <!-- Motyw + Fullscreen (osobny skrypt, odporny na błędy w module głównym) -->
-  <script>
-    const THEME_KEY = "tool_theme_v1";
-
-    function applyTheme(theme){
-      if(theme === "light"){
-        document.body.classList.add("theme-light");
-        setThemeColor("#ffffff");
-      } else {
-        document.body.classList.remove("theme-light");
-        setThemeColor("#0b1220");
-      }
-      // odśwież radio
-      const light = document.getElementById('theme-light');
-      const dark  = document.getElementById('theme-dark');
-      if(light && dark){ light.checked = theme==="light"; dark.checked = theme!=="light"; }
-    }
-    function setThemeColor(hex){
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if(meta) meta.setAttribute('content', hex);
-    }
-    function loadTheme(){ try{ return localStorage.getItem(THEME_KEY) || "dark"; }catch(e){ return "dark"; } }
-    function saveTheme(t){ try{ localStorage.setItem(THEME_KEY, t); }catch(e){} }
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-      // Ustaw motyw z pamięci
-      applyTheme(loadTheme());
-
-      // Obsługa przełącznika
-      document.getElementById('theme-light').addEventListener('change', ()=>{ applyTheme('light'); saveTheme('light'); });
-      document.getElementById('theme-dark').addEventListener('change', ()=>{ applyTheme('dark');  saveTheme('dark');  });
-
-      // Fullscreen toggle + etykieta
-      const fsBtn = document.getElementById('fullscreen');
-      function syncFsButton(){ fsBtn.textContent = document.fullscreenElement ? 'Wyjście z pełnego ekranu' : 'Pełny ekran'; }
-      fsBtn.addEventListener('click', async ()=>{
-        try{
-          if(!document.fullscreenElement){ await document.documentElement.requestFullscreen(); }
-          else { await document.exitFullscreen(); }
-        }catch(e){ alert('Przeglądarka zablokowała pełny ekran.'); }
-        syncFsButton();
-      });
-      document.addEventListener('fullscreenchange', syncFsButton);
-      syncFsButton();
-    });
-  </script>
-
-  <script defer>
-    // ====== ZESTAW: 50 słów DE-PL + 30 zdań ======
-    // Uwaga: struktura 'en' przechowuje tu niemieckie hasło/zdanie (dla zgodności z logiką aplikacji).
-    const seed = [
-      // Narzędzia i materiały
-      { en:"das Klebeband", pl:"taśma klejąca", tag:"tools" },
-      { en:"der Marker", pl:"marker", tag:"tools" },
-      { en:"das Cuttermesser", pl:"nożyk do kartonów", tag:"tools" },
-      { en:"die Klinge", pl:"ostrze", tag:"tools" },
-      { en:"die Ersatzklingen", pl:"zapasowe ostrza", tag:"tools" },
-      { en:"der Abroller", pl:"dyspenser do taśmy", tag:"tools" },
-      { en:"die Folie", pl:"folia", tag:"tools" },
-      { en:"die Stretchfolie", pl:"folia stretch", tag:"tools" },
-      { en:"die Etikette", pl:"etykieta", tag:"tools" },
-      { en:"der Stift", pl:"długopis", tag:"tools" },
-
-      // Opakowania i jednostki ładunkowe
-      { en:"die Kiste", pl:"skrzynia", tag:"packaging" },
-      { en:"der Karton", pl:"karton", tag:"packaging" },
-      { en:"die Palette", pl:"paleta", tag:"packaging" },
-      { en:"die geschlossene Palette", pl:"zamknięta paleta", tag:"packaging" },
-      { en:"die verpackte Palette", pl:"zapakowana paleta", tag:"packaging" },
-      { en:"die gesicherte Palette", pl:"zabezpieczona paleta", tag:"packaging" },
-      { en:"die beschädigte Palette", pl:"uszkodzona paleta", tag:"packaging" },
-      { en:"die Ladeeinheit", pl:"jednostka ładunkowa", tag:"packaging" },
-      { en:"die Umverpackung", pl:"opakowanie zbiorcze", tag:"packaging" },
-      { en:"die Charge", pl:"partia", tag:"packaging" },
-
-      // Sprzęt magazynowy
-      { en:"der Gabelstapler", pl:"wózek widłowy", tag:"equipment" },
-      { en:"der Handhubwagen (Ameise)", pl:"paleciak ręczny", tag:"equipment" },
-      { en:"der Schubmaststapler", pl:"wózek reach truck", tag:"equipment" },
-      { en:"die Hebebühne", pl:"podnośnik", tag:"equipment" },
-      { en:"das Förderband", pl:"taśmociąg", tag:"equipment" },
-      { en:"die Waage", pl:"waga", tag:"equipment" },
-      { en:"der Scanner", pl:"skaner", tag:"equipment" },
-      { en:"das Hochregal", pl:"regał wysokiego składowania", tag:"equipment" },
-      { en:"der Gang", pl:"korytarz", tag:"equipment" },
-      { en:"die Rampe", pl:"rampa", tag:"equipment" },
-
-      // Dokumenty i dane
-      { en:"der Lieferschein", pl:"list przewozowy", tag:"documents" },
-      { en:"die Rechnung", pl:"faktura", tag:"documents" },
-      { en:"die Bestellung", pl:"zamówienie", tag:"documents" },
-      { en:"die Artikelnummer", pl:"numer artykułu", tag:"documents" },
-      { en:"die Seriennummer", pl:"numer seryjny", tag:"documents" },
-      { en:"die Menge", pl:"ilość", tag:"documents" },
-      { en:"das Haltbarkeitsdatum (MHD)", pl:"data ważności", tag:"documents" },
-      { en:"das Nettogewicht", pl:"waga netto", tag:"documents" },
-      { en:"das Bruttogewicht", pl:"waga brutto", tag:"documents" },
-      { en:"das Volumen", pl:"objętość", tag:"documents" },
-
-      // BHP i organizacja
-      { en:"die Warnweste", pl:"kamizelka odblaskowa", tag:"safety" },
-      { en:"die Sicherheitsschuhe", pl:"buty ochronne", tag:"safety" },
-      { en:"die Schutzbrille", pl:"okulary ochronne", tag:"safety" },
-      { en:"die Handschuhe", pl:"rękawice", tag:"safety" },
-      { en:"die Unterweisung", pl:"szkolenie BHP", tag:"safety" },
-      { en:"die Fluchtwege", pl:"drogi ewakuacyjne", tag:"safety" },
-      { en:"die Schicht", pl:"zmiana", tag:"safety" },
-      { en:"die Überstunden", pl:"nadgodziny", tag:"safety" },
-      { en:"die Pause", pl:"przerwa", tag:"safety" },
-      { en:"der Auftrag", pl:"zlecenie", tag:"safety" },
-
-      // ===== 30 zdań (tag: sentences) =====
-      { en:"Die Lieferung ist um neun Uhr angekommen.", pl:"Dostawa przyjechała o dziewiątej.", tag:"sentences" },
-      { en:"Bitte prüfen Sie den Lieferschein und die Menge.", pl:"Proszę sprawdzić list przewozowy i ilość.", tag:"sentences" },
-      { en:"Die Ware ist unbeschädigt und vollständig.", pl:"Towar jest nienaruszony i kompletny.", tag:"sentences" },
-      { en:"Hier fehlt eine Palette.", pl:"Brakuje tutaj jednej palety.", tag:"sentences" },
-      { en:"Wir buchen den Wareneingang im System.", pl:"Księgujemy przyjęcie w systemie.", tag:"sentences" },
-      { en:"Lagere die Kartons im Hochregal, Reihe B, Platz 12.", pl:"Odłóż kartony do regału wysokiego, rząd B, miejsce 12.", tag:"sentences" },
-      { en:"Achte auf das zulässige Maximalgewicht.", pl:"Zwróć uwagę na dopuszczalną maksymalną wagę.", tag:"sentences" },
-      { en:"Benutze für diese Last den Schubmaststapler.", pl:"Do tego ładunku użyj reach trucka.", tag:"sentences" },
-      { en:"Stell die Palette auf die Rampe.", pl:"Postaw paletę na rampie.", tag:"sentences" },
-      { en:"Hol bitte die Palette vom Warenausgang.", pl:"Przywieź proszę paletę ze strefy wydań.", tag:"sentences" },
-      { en:"Kommissioniere fünf Stück nach Auftrag 1034.", pl:"Skompletuj pięć sztuk do zlecenia 1034.", tag:"sentences" },
-      { en:"Scanne jede Artikelnummer vor dem Entnehmen.", pl:"Skanuj każdy numer artykułu przed pobraniem.", tag:"sentences" },
-      { en:"Lege die Ware in die Kiste mit dem grünen Label.", pl:"Włóż towar do skrzyni z zieloną etykietą.", tag:"sentences" },
-      { en:"Bitte verpacke stoßfest und fülle den Leerraum mit Papier.", pl:"Zapakuj amortyzująco i wypełnij puste przestrzenie papierem.", tag:"sentences" },
-      { en:"Das Bruttogewicht steht auf dem Etikett.", pl:"Waga brutto jest na etykiecie.", tag:"sentences" },
-      { en:"Die Sendung muss heute bis sechzehn Uhr raus.", pl:"Przesyłka musi wyjść dziś do szesnastej.", tag:"sentences" },
-      { en:"Der Spediteur wartet an der Ladezone.", pl:"Przewoźnik czeka w strefie załadunku.", tag:"sentences" },
-      { en:"Bitte sichere die Palette mit Klebeband.", pl:"Proszę zabezpiecz paletę taśmą klejącą.", tag:"sentences" },
-      { en:"Die Palette ist fertig zum Abholen.", pl:"Paleta jest gotowa do odebrania.", tag:"sentences" },
-      { en:"Verwende den Marker, um die Kiste zu beschriften.", pl:"Użyj markera, żeby opisać skrzynię.", tag:"sentences" },
-      { en:"Kannst du mir bitte die Palette in Reihe C bringen?", pl:"Możesz mi proszę podstawić paletę do rzędu C?", tag:"sentences" },
-      { en:"Heb die Palette vorsichtig an, sie ist instabil.", pl:"Podnieś paletę ostrożnie, jest niestabilna.", tag:"sentences" },
-      { en:"Fahr bitte langsam, der Gang ist eng.", pl:"Jedź proszę powoli, korytarz jest wąski.", tag:"sentences" },
-      { en:"Die Palette ist schon geschlossen.", pl:"Paleta jest już zamknięta.", tag:"sentences" },
-      { en:"Hast du noch Ersatzklingen für das Cuttermesser?", pl:"Masz jeszcze zapasowe ostrza do nożyka?", tag:"sentences" },
-      { en:"Wir führen heute eine Stichprobenprüfung durch.", pl:"Dziś robimy kontrolę wyrywkową.", tag:"sentences" },
-      { en:"Bitte zähle den Bestand im Regal C vollständig.", pl:"Proszę policz stan w regale C w całości.", tag:"sentences" },
-      { en:"Es gibt eine Abweichung zwischen System und Realität.", pl:"Jest odchyłka między systemem a rzeczywistością.", tag:"sentences" },
-      { en:"Buchen wir die Differenz nach.", pl:"Zaksięgujmy różnicę.", tag:"sentences" },
-      { en:"Melde jede Beschädigung sofort der Schichtleitung.", pl:"Zgłoś każde uszkodzenie kierownikowi zmiany.", tag:"sentences" }
-    ];
-
-    // ====== LocalStorage: dedykowane klucze dla DE ======
-    const LS_KEY   = "de_words_v1";
-    const LS_PREV  = "de_words_prev_v0";
-    const LS_STATS = "de_stats_v1";
-    const LS_DAILY = "de_daily_v1";
-    const LS_PREFS = "de_prefs_v1";
-    const CUSTOM_LIMIT = 5;
-
-    // Preferencje (kierunek, widoczność zdań)
-    let prefs = JSON.parse(localStorage.getItem(LS_PREFS) || '{"direction":"EN2PL","showExample":false}');
-    function savePrefs(){ localStorage.setItem(LS_PREFS, JSON.stringify({direction, showExample})); }
-
-    function mergeOldIntoSeed(oldArr){
-      if(!Array.isArray(oldArr)) return seed.map(w=>({...w, known:false}));
-      const key = s => `${(s.en||'').toLowerCase()}__${(s.pl||'').toLowerCase()}`;
-      const map = new Map(seed.map(x=>[key(x), {...x, known:false}])); /* (fix) poprawna składnia */
-      oldArr.forEach(x=>{
-        const k = key(x);
-        if(map.has(k)){ const base = map.get(k); map.set(k, {...base, known: !!x.known}); }
-        else { map.set(k, {...x, known: !!x.known}); }
-      });
-      return [...map.values()];
-    }
-
-    function loadData(){
-      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
-      if(saved && Array.isArray(saved)) return saved;
-      const old = JSON.parse(localStorage.getItem(LS_PREV) || "null");
-      const merged = mergeOldIntoSeed(old);
-      localStorage.setItem(LS_KEY, JSON.stringify(merged));
-      return merged;
-    }
-
-    function saveData(data){ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
-    function loadStats(){ return JSON.parse(localStorage.getItem(LS_STATS) || "{}") }
-    function saveStats(s){ localStorage.setItem(LS_STATS, JSON.stringify(s)) }
-    function loadDaily(){ return JSON.parse(localStorage.getItem(LS_DAILY) || "{}") }
-    function saveDaily(d){ localStorage.setItem(LS_DAILY, JSON.stringify(d)) }
-
-    let data = loadData();
-    let stats = loadStats();
-    let daily = loadDaily();
-
-    let mode = "flash";                 // flash | quiz | exam
-    let direction = prefs.direction || "EN2PL";   // DE→PL (wewnętrznie używamy EN2PL dla zgodności)
-    let cursor = 0;
-    let showExample = !!prefs.showExample;
-
-    // Helpers
-    const $ = sel => document.querySelector(sel);
-    const listEl = $("#list");
-    const tagsEl = $("#tags");
-
-    function todayKey(){ const d = new Date(); return d.toISOString().slice(0,10); }
-    function incDaily(key){
-      const k = todayKey();
-      daily[k] = daily[k] || {learned:0, correct:0};
-      daily[k][key] = (daily[k][key]||0)+1;
-      saveDaily(daily);
-      renderDailyStats();
-    }
-
-    function renderList(filterTag=null){
-      const items = data
-        .filter(w => !filterTag || w.tag===filterTag)
-        .sort((a,b)=> a.en.localeCompare(b.en));
-      listEl.innerHTML = items.map((w)=>{
-        const idx = data.indexOf(w);
-        return `<div class="tag" data-idx="${idx}" title="Kliknij, aby przełączyć status">${w.known?"✅":"⬜"} ${w.en} — ${w.pl}</div>`
-      }).join("");
-    }
-
-    function renderTags(){
-      const tags = [...new Set(data.map(w=>w.tag))];
-      tagsEl.innerHTML = ['<span class="tag" data-tag="*">Wszystkie</span>']
-        .concat(tags.map(t=>`<span class="tag" data-tag="${t}">${t}</span>`)).join("");
-    }
-
-    function updateKPI(){
-      const known = data.filter(w=>w.known).length;
-      $("#stat-known").textContent = known;
-      $("#stat-left").textContent = data.length - known;
-      const acc = stats.correct && stats.total ? Math.round(100*stats.correct/stats.total) : 0;
-      $("#stat-acc").textContent = acc + "%";
-      const k = todayKey();
-      const today = daily[k] || {learned:0, correct:0};
-      $("#stat-today").textContent = today.learned + today.correct;
-      $("#stat-week").textContent = sumLastNDays(7);
-      updateCustomCounter();
-    }
-
-    function sumLastNDays(n){
-      const now = new Date();
-      let sum = 0;
-      for(let i=0;i<n;i++){
-        const d = new Date(now); d.setDate(now.getDate()-i);
-        const k = d.toISOString().slice(0,10);
-        const day = daily[k];
-        if(day) sum += (day.learned||0) + (day.correct||0);
-      }
-      return sum;
-    }
-
-    function renderDailyStats(){
-      const now = new Date();
-      let rows = `<table class="table"><thead><tr><th>Dzień</th><th>Nauczone</th><th>Poprawne</th><th>Suma</th></tr></thead><tbody>`;
-      for(let i=6;i>=0;i--){
-        const d = new Date(now); d.setDate(now.getDate()-i);
-        const k = d.toISOString().slice(0,10);
-        const day = daily[k] || {learned:0, correct:0};
-        rows += `<tr><td>${k}</td><td>${day.learned||0}</td><td>${day.correct||0}</td><td>${(day.learned||0)+(day.correct||0)}</td></tr>`;
-      }
-      rows += `</tbody></table>`;
-      $("#stats").innerHTML = rows;
-    }
-
-    // Kierunek
-    function setDirection(dir){
-      direction = dir;
-      savePrefs();
-      if(mode==='flash') renderCard();
-    }
-
-    // Zdanie / wskazówka
-    function renderExample(w){
-      const el = $("#card-example");
-      if(!w || !showExample){ el.textContent = ""; return; }
-      if(w.exEN && w.exPL){
-        el.textContent = (direction==="PL2EN"? `${w.exPL} → ${w.exEN}` : `${w.exEN} → ${w.exPL}`);
-      } else if(w.tag === "sentences"){
-        el.textContent = "Ćwicz całe zdanie – zwróć uwagę na szyk i przyimki.";
-      } else {
-        el.textContent = "Brak przykładowego zdania.";
-      }
-    }
-    function updateSentenceButton(){
-      const btn = $("#toggle-sentence");
-      if(btn) btn.textContent = showExample ? "Ukryj wskazówkę" : "Pokaż wskazówkę";
-    }
-
-    // FISZKI
-    function nextIndex(){
-      const pool = data.filter(w=>!w.known);
-      if(pool.length===0){ cursor = -1; return; }
-      const idx = Math.floor(Math.random()*pool.length);
-      cursor = data.indexOf(pool[idx]);
-    }
-
-    function showFlash(){
-      mode = "flash";
-      $("#flashcards").classList.remove("hidden");
-      $("#quiz").classList.add("hidden");
-      $("#exam").classList.add("hidden");
-      nextIndex();
-      renderCard();
-    }
-
-    function displayPrompt(w){
-      if(direction==="PL2EN") return w.pl;     // PL → DE
-      if(direction==="MIX") return Math.random()<0.5? w.en : w.pl;
-      return w.en; // DE → PL
-    }
-    function displayAnswer(w, prompt){
-      return (prompt===w.en)? w.pl : w.en;
-    }
-
-    function renderCard(){
-      const wordEl = $("#card-word");
-      const transEl = $("#card-translation");
-      if(cursor===-1){
-        wordEl.textContent = "🎉 Wszystko nauczone!";
-        transEl.innerHTML = "";
-        $("#card-example").innerHTML = "";
-        return;
-      }
-      const w = data[cursor];
-      const prompt = displayPrompt(w);
-      wordEl.textContent = prompt;
-      transEl.innerHTML = "&nbsp;";
-      renderExample(w);
-    }
-
-    // QUIZ
-    function showQuiz(){
-      mode = "quiz";
-      $("#flashcards").classList.add("hidden");
-      $("#quiz").classList.remove("hidden");
-      $("#exam").classList.add("hidden");
-      ask();
-    }
-
-    function makeQuestion(){
-      const pool = data.slice();
-      const q = pool[Math.floor(Math.random()*pool.length)];
-      const prompt = direction==="MIX" ? (Math.random()<0.5? q.en : q.pl) : (direction==="PL2EN"? q.pl : q.en);
-      const wrongs = pool.filter(w=>w!==q).sort(()=>Math.random()-0.5).slice(0,3);
-      const correctText = (prompt===q.en)? q.pl : q.en;
-      const optionsTexts = [correctText, ...wrongs.map(w => (prompt===q.en? w.pl : w.en))].sort(()=>Math.random()-0.5);
-      return {q, prompt, optionsTexts, correctText};
-    }
-
-    function ask(){
-      const {q, prompt, optionsTexts, correctText} = makeQuestion();
-      $("#quiz-q").textContent = (prompt===q.en) ? `Co znaczy: „${q.en}”?` : `Jak po niemiecku: „${q.pl}”?`;
-      const box = $("#quiz-choices"); box.innerHTML = "";
-      $("#quiz-feedback").textContent = "";
-      optionsTexts.forEach(text=>{
-        const div = document.createElement('div');
-        div.className = 'choice';
-        div.textContent = text;
-        div.onclick = ()=>{
-          stats.total = (stats.total||0)+1;
-          if(text===correctText){
-            div.classList.add('correct');
-            $("#quiz-feedback").textContent = "Dobrze!";
-            stats.correct = (stats.correct||0)+1;
-            incDaily('correct');
-          } else {
-            div.classList.add('wrong');
-            $("#quiz-feedback").textContent = `Źle. Poprawnie: ${correctText}`;
-          }
-          saveStats(stats); updateKPI();
-          setTimeout(ask, 800);
-        };
-        box.appendChild(div);
-      });
-    }
-
-    // EXAM
-    let examState = null;
-    function startExam(){
-      const count = Math.max(5, Math.min(50, parseInt($("#exam-count").value||10)));
-      const dir = $("#exam-direction").value;
-      const qs = [];
-      for(let i=0;i<count;i++){
-        const pool = data.slice();
-        const q = pool[Math.floor(Math.random()*pool.length)];
-        const prompt = dir==="MIX" ? (Math.random()<0.5? q.en : q.pl) : (dir==="PL2EN"? q.pl : q.en);
-        const wrongs = pool.filter(w=>w!==q).sort(()=>Math.random()-0.5).slice(0,3);
-        const correctText = (prompt===q.en)? q.pl : q.en;
-        const optionsTexts = [correctText, ...wrongs.map(w => (prompt===q.en? w.pl : w.en))].sort(()=>Math.random()-0.5);
-        qs.push({q, prompt, optionsTexts, correctText, answer:null});
-      }
-      examState = {dir, idx:0, qs, correct:0};
-      $("#exam-area").classList.remove('hidden');
-      $("#exam-cancel").classList.remove('hidden');
-      $("#exam-summary").classList.add('hidden');
-      renderExam();
-    }
-
-    function renderExam(){
-      const st = examState; if(!st) return;
-      const item = st.qs[st.idx];
-      $("#exam-q").textContent = (item.prompt===item.q.en) ? `Co znaczy: „${item.q.en}”?` : `Jak po niemiecku: „${item.q.pl}”?`;
-      $("#exam-progress").textContent = `Pytanie ${st.idx+1}/${st.qs.length}`;
-      const box = $("#exam-choices"); box.innerHTML = "";
-      item.optionsTexts.forEach(text=>{
-        const div = document.createElement('div');
-        div.className = 'choice';
-        div.textContent = text;
-        div.onclick = ()=>{
-          item.answer = text;
-          if(text===item.correctText){ st.correct++; incDaily('correct'); }
-          if(st.idx < st.qs.length-1){ st.idx++; renderExam(); }
-          else { finishExam(); }
-        };
-        box.appendChild(div);
-      });
-    }
-
-    function finishExam(){
-      const st = examState; if(!st) return;
-      $("#exam-area").classList.add('hidden');
-      $("#exam-cancel").classList.add('hidden');
-      const score = Math.round(100*st.correct/st.qs.length);
-      let html = `<div class="summary"><div class="big">Wynik: ${st.correct}/${st.qs.length} (${score}%)</div>`;
-      html += `<div class="section-title">Przegląd odpowiedzi</div>`;
-      html += `<table class="table"><thead><tr><th>Pytanie</th><th>Twoja odp.</th><th>Poprawna</th><th>Tag</th></tr></thead><tbody>`;
-      st.qs.forEach(it=>{
-        const ok = it.answer===it.correctText;
-        html += `<tr><td>${it.prompt}</td><td style="color:${ok?'#2ecc71':'#e74c3c'}">${it.answer||'-'}</td><td>${it.correctText}</td><td>${it.q.tag||''}</td></tr>`;
-      });
-      html += `</tbody></table></div>`;
-      $("#exam-summary").innerHTML = html;
-      $("#exam-summary").classList.remove('hidden');
-      examState = null;
-    }
-
-    // DODATKOWE: licznik słów własnych i limit
-    function countCustom(){ return data.filter(w=>w.tag==='custom').length; }
-    function updateCustomCounter(){
-      const c = countCustom();
-      const span = $("#custom-count");
-      if(span) span.textContent = c;
-      const btn = $("#add-btn");
-      if(btn) btn.disabled = c >= CUSTOM_LIMIT;
-    }
-
-    // Zdarzenia
-    document.addEventListener('click', (e)=>{
-      const tag = e.target.getAttribute('data-tag');
-      if(tag){ renderList(tag==='*'?null:tag); }
-
-      if(e.target.matches('#show-translation')){
-        if(cursor!==-1){
-          const w = data[cursor];
-          const prompt = $("#card-word").textContent;
-          $("#card-translation").textContent = displayAnswer(w, prompt);
-        }
-      }
-
-      if(e.target.matches('#toggle-sentence')){
-        if(cursor!==-1){
-          showExample = !showExample;
-          savePrefs();
-          updateSentenceButton();
-          renderExample(data[cursor]);
-        }
-      }
-
-      if(e.target.matches('#mark-known')){
-        if(cursor!==-1){
-          data[cursor].known = true;
-          saveData(data); updateKPI(); incDaily('learned');
-          nextIndex(); renderCard(); renderList();
-        }
-      }
-      if(e.target.matches('#mode-flash')) showFlash();
-      if(e.target.matches('#mode-quiz')) showQuiz();
-      if(e.target.matches('#mode-exam')){ $("#exam").classList.remove('hidden'); $("#flashcards").classList.add('hidden'); $("#quiz").classList.add('hidden'); mode='exam'; }
-      if(e.target.matches('#shuffle')){ data.sort(()=>Math.random()-0.5); renderList(); if(mode==='flash') renderCard(); saveData(data); }
-      if(e.target.matches('#reset')){
-        if(confirm('Zerować status nauki i statystyki?')){
-          data.forEach(w=>w.known=false); stats={}; daily={};
-          saveData(data); saveStats(stats); saveDaily(daily);
-          updateKPI(); renderList(); if(mode==='flash') renderCard(); renderDailyStats();
-        }
-      }
-      if(e.target.closest('#list .tag')){
-        const el = e.target.closest('#list .tag');
-        const i = +el.dataset.idx; data[i].known = !data[i].known; saveData(data); updateKPI(); renderList();
-      }
-      if(e.target.matches('#exam-start')) startExam();
-      if(e.target.matches('#exam-cancel')){ examState=null; $("#exam-area").classList.add('hidden'); $("#exam-cancel").classList.add('hidden'); $("#exam-summary").classList.add('hidden'); }
-    });
-
-    // Zmiana kierunku – FIX
-    document.addEventListener('change', (e)=>{
-      if(e.target && e.target.id === 'direction'){
-        setDirection(e.target.value);
-      }
-    });
-
-    // Dodawanie własnych słów – z limitem 5
-    $("#add-btn").onclick = ()=>{
-      const current = countCustom();
-      if(current >= CUSTOM_LIMIT){
-        alert(`Osiągnięto limit ${CUSTOM_LIMIT} własnych słów.`);
-        updateCustomCounter();
-        return;
-      }
-      const en = $("#add-en").value.trim();
-      const pl = $("#add-pl").value.trim();
-      const note = $("#add-note").value.trim();
-      if(!en || !pl){ alert('Podaj obie wersje: niemiecki i polski.'); return; }
-      const extras = note ? (note.includes(' ')? {exEN: note, exPL: ''} : {}) : {};
-      data.push({en, pl, tag:'custom', known:false, ...extras});
-      saveData(data); renderTags(); renderList(); updateKPI(); updateCustomCounter();
-      $("#add-en").value = $("#add-pl").value = $("#add-note").value = "";
-    };
-
-    // Start
-    document.getElementById('direction').value = direction;
-    renderTags(); renderList(); renderDailyStats(); updateKPI(); updateSentenceButton(); showFlash();
-  </script>
-
-  <footer class="site-footer" role="contentinfo" aria-label="Informacje o autorze">
+  <footer class="site">
     <div class="inner">
-      <div class="left">
-        © 2025 zolwikC — „Niemiecki dla magazynu / logistyki”
-      </div>
-      <div class="right">
-        <a href="https://github.com/zolwikC" target="_blank" rel="noopener noreferrer" aria-label="GitHub autora">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.73 0 8.33c0 3.68 2.29 6.8 5.47 7.9.4.08.55-.18.55-.39 0-.19-.01-.82-.01-1.49-2.01.45-2.43-.5-2.58-.96-.09-.24-.48-.96-.82-1.15-.28-.15-.68-.52-.01-.53.63-.01 1.08.6 1.23.85.72 1.23 1.87.88 2.33.67.07-.54.28-.88.51-1.08-1.78-.2-3.64-.92-3.64-4.08 0-.9.31-1.63.82-2.21-.08-.2-.36-1.01.08-2.1 0 0 .67-.22 2.2.85.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.07 2.2-.85 2.2-.85.44 1.09.16 1.9.08 2.1.51.58.82 1.31.82 2.21 0 3.17-1.87 3.88-3.65 4.08.29.26.54.77.54 1.56 0 1.12-.01 2.02-.01 2.29 0 .21.15.47.55.39A8.33 8.33 0 0 0 16 8.33C16 3.73 12.42 0 8 0Z"/></svg>
-          GitHub profil
-        </a>
-      </div>
+      <div>© 2025 LearnEnglish for Developers — dev.to + Work English</div>
+      <div>Autor: <a href="https://github.com/zolwikC" target="_blank" rel="noopener">zolwikC</a></div>
     </div>
   </footer>
+
+<script>
+/* ===================== PAKIETY (rozszerzone) ===================== */
+/* Struktura elementu:
+   { en:"...", pl:"...", tag:"...", exEN:"(opcjonalne zdanie)", exPL:"(tłumaczenie)" } */
+const packages = {
+  devto_general:{
+    icon:"💬",
+    name:"English for dev.to",
+    desc:"czytanie, komentarze, pisanie postów",
+    words:[
+      // Core czytanie/komentarze
+      {en:"developer",pl:"programista",tag:"core"},
+      {en:"software engineer",pl:"inżynier oprogramowania",tag:"core"},
+      {en:"open source",pl:"otwarte oprogramowanie",tag:"core"},
+      {en:"repository",pl:"repozytorium",tag:"core"},
+      {en:"maintainer",pl:"opiekun projektu",tag:"core"},
+      {en:"pull request",pl:"prośba o scalenie",tag:"core"},
+      {en:"merge conflict",pl:"konflikt scalania",tag:"core"},
+      {en:"issue",pl:"zgłoszenie/problem",tag:"core"},
+      {en:"commit",pl:"zatwierdzenie zmian",tag:"core"},
+      {en:"branch",pl:"gałąź (kodu)",tag:"core"},
+      {en:"release",pl:"wydanie",tag:"core"},
+      {en:"workflow",pl:"przepływ pracy",tag:"core"},
+      {en:"roadmap",pl:"plan rozwoju",tag:"core"},
+      {en:"contribute",pl:"wnosić wkład",tag:"core"},
+      {en:"review",pl:"recenzja / przegląd",tag:"core"},
+      {en:"documentation",pl:"dokumentacja",tag:"core"},
+      {en:"tutorial",pl:"poradnik",tag:"core"},
+      {en:"walkthrough",pl:"krok po kroku",tag:"core"},
+      {en:"benchmark",pl:"test wydajności",tag:"core"},
+      {en:"performance",pl:"wydajność",tag:"core"},
+      {en:"scalability",pl:"skalowalność",tag:"core"},
+      {en:"trade-off",pl:"kompromis",tag:"core"},
+      {en:"use case",pl:"przypadek użycia",tag:"core"},
+      {en:"best practices",pl:"dobre praktyki",tag:"core"},
+      {en:"anti-pattern",pl:"antywzorzec",tag:"core"},
+      // Pytania/komentarze
+      {en:"Great post!",pl:"Świetny wpis!",tag:"comments"},
+      {en:"Thanks for sharing.",pl:"Dzięki za podzielenie się.",tag:"comments"},
+      {en:"I learned a lot from this.",pl:"Dużo się z tego nauczyłem.",tag:"comments"},
+      {en:"Could you provide an example?",pl:"Czy mógłbyś podać przykład?",tag:"comments"},
+      {en:"I faced the same issue.",pl:"Miałem ten sam problem.",tag:"comments"},
+      {en:"Here’s my solution.",pl:"Oto moje rozwiązanie.",tag:"comments"},
+      {en:"This helped me a lot.",pl:"To bardzo mi pomogło.",tag:"comments"},
+      {en:"Nice explanation!",pl:"Świetne wyjaśnienie!",tag:"comments"},
+      {en:"I disagree, because...",pl:"Nie zgadzam się, ponieważ...",tag:"comments"},
+      // Pisanie artykułów
+      {en:"In this tutorial, we’ll learn how to...",pl:"W tym poradniku nauczymy się, jak...",tag:"writing"},
+      {en:"Let’s take a look at...",pl:"Przyjrzyjmy się...",tag:"writing"},
+      {en:"Make sure you have installed...",pl:"Upewnij się, że masz zainstalowane...",tag:"writing"},
+      {en:"This approach allows us to...",pl:"To podejście pozwala nam...",tag:"writing"},
+      {en:"Run the following command:",pl:"Uruchom następującą komendę:",tag:"writing"},
+      {en:"Keep in mind that...",pl:"Pamiętaj, że...",tag:"writing"},
+      {en:"It’s important to note that...",pl:"Warto zauważyć, że...",tag:"writing"},
+      {en:"This project is built with...",pl:"Ten projekt zbudowano przy użyciu...",tag:"writing"},
+      {en:"You can customize this by...",pl:"Możesz to dostosować poprzez...",tag:"writing"},
+      {en:"Let’s refactor our code.",pl:"Przebudujmy nasz kod.",tag:"writing"},
+      // Zdania (typowe na dev.to)
+      {en:"I’m currently learning React and Flask.",pl:"Aktualnie uczę się Reacta i Flaska.",tag:"sentences"},
+      {en:"This article helped me fix a deployment issue.",pl:"Ten artykuł pomógł mi naprawić problem z wdrożeniem.",tag:"sentences"},
+      {en:"You can find the source code on GitHub.",pl:"Kod źródłowy znajdziesz na GitHubie.",tag:"sentences"},
+      {en:"I wrote a similar post about API authentication.",pl:"Napisałem podobny wpis o uwierzytelnianiu API.",tag:"sentences"},
+      {en:"If you encounter any errors, check the logs.",pl:"Jeśli napotkasz błędy, sprawdź logi.",tag:"sentences"},
+      {en:"This project follows the MVC pattern.",pl:"Ten projekt korzysta z wzorca MVC.",tag:"sentences"},
+      {en:"Let’s fix this bug together.",pl:"Naprawmy ten błąd razem.",tag:"sentences"},
+      {en:"The new feature works perfectly.",pl:"Nowa funkcja działa znakomicie.",tag:"sentences"},
+      {en:"What stack are you using for your app?",pl:"Jakiego stosu technologicznego używasz?",tag:"sentences"},
+      {en:"Can you recommend resources for beginners?",pl:"Polecisz materiały dla początkujących?",tag:"sentences"},
+      {en:"I deployed the app to Render successfully.",pl:"Pomyślnie wdrożyłem aplikację na Render.",tag:"sentences"},
+      {en:"The code looks clean and well-structured.",pl:"Kod wygląda czysto i jest dobrze zorganizowany.",tag:"sentences"},
+      {en:"I need to optimize the performance of this script.",pl:"Muszę zoptymalizować wydajność tego skryptu.",tag:"sentences"},
+      {en:"Let’s deploy the final version today.",pl:"Wdróżmy dziś ostateczną wersję.",tag:"sentences"}
+    ]
+  },
+
+  meetings_teamwork:{
+    icon:"🗣️",
+    name:"Workplace English",
+    desc:"rozmowy w pracy i codzienna komunikacja",
+    words:[
+      {en:"Let’s discuss this later.",pl:"Omówmy to później.",tag:"meeting"},
+      {en:"I agree with your point.",pl:"Zgadzam się z Tobą.",tag:"meeting"},
+      {en:"Could you clarify that?",pl:"Czy możesz to doprecyzować?",tag:"meeting"},
+      {en:"We need to prioritize tasks.",pl:"Musimy ustalić priorytety zadań.",tag:"team"},
+      {en:"Our deadline is next week.",pl:"Termin jest w przyszłym tygodniu.",tag:"team"},
+      {en:"Let’s assign responsibilities.",pl:"Przydzielmy obowiązki.",tag:"team"},
+      {en:"We’re making good progress.",pl:"Robimy dobre postępy.",tag:"team"},
+      {en:"I’ll handle this issue.",pl:"Zajmę się tym problemem.",tag:"team"},
+      {en:"Can you take a look at this bug?",pl:"Możesz zerknąć na ten błąd?",tag:"team"},
+      {en:"Let’s keep communication open.",pl:"Utrzymujmy otwartą komunikację.",tag:"team"},
+      {en:"I’m running a bit late.",pl:"Trochę się spóźnię.",tag:"daily"},
+      {en:"I’m on it.",pl:"Już się tym zajmuję.",tag:"daily"},
+      {en:"Sounds good to me.",pl:"Brzmi dobrze.",tag:"daily"},
+      {en:"That works for me.",pl:"To mi pasuje.",tag:"daily"},
+      {en:"Let’s touch base tomorrow.",pl:"Skontaktujmy się jutro.",tag:"daily"},
+      // Zdania sytuacyjne
+      {en:"Could you share your screen?",pl:"Czy możesz udostępnić ekran?",tag:"sentences"},
+      {en:"Let’s take five and continue at ten past.",pl:"Zróbmy pięć minut przerwy i wróćmy za dziesięć po.",tag:"sentences"},
+      {en:"I’ll write a short summary after the meeting.",pl:"Napiszę krótkie podsumowanie po spotkaniu.",tag:"sentences"},
+      {en:"Please keep your comments brief.",pl:"Proszę, mówcie krótko.",tag:"sentences"},
+      {en:"We should loop in the product owner.",pl:"Powinniśmy dołączyć product ownera.",tag:"sentences"}
+    ]
+  },
+
+  python_flask:{
+    icon:"🐍",
+    name:"Python & Flask",
+    desc:"słownictwo backend/Flask",
+    words:[
+      {en:"route",pl:"ścieżka w aplikacji",tag:"flask"},
+      {en:"endpoint",pl:"punkt końcowy API",tag:"flask"},
+      {en:"template",pl:"szablon HTML",tag:"flask"},
+      {en:"render",pl:"wyrenderować",tag:"flask"},
+      {en:"context",pl:"kontekst danych",tag:"flask"},
+      {en:"debug mode",pl:"tryb debugowania",tag:"python"},
+      {en:"exception",pl:"wyjątek",tag:"python"},
+      {en:"traceback",pl:"ślad błędu (traceback)",tag:"python"},
+      {en:"decorator",pl:"dekorator",tag:"python"},
+      {en:"dictionary",pl:"słownik (typ danych)",tag:"python"},
+      {en:"inheritance",pl:"dziedziczenie",tag:"python"},
+      // Zdania
+      {en:"The route returns a JSON response.",pl:"Ta ścieżka zwraca odpowiedź JSON.",tag:"sentences"},
+      {en:"Check the logs to see the traceback.",pl:"Sprawdź logi, aby zobaczyć traceback.",tag:"sentences"},
+      {en:"We render the template with context variables.",pl:"Renderujemy szablon z zmiennymi kontekstu.",tag:"sentences"}
+    ]
+  },
+
+  github_workflow:{
+    icon:"🐙",
+    name:"GitHub Workflow",
+    desc:"git, PR, code review",
+    words:[
+      {en:"commit message",pl:"wiadomość commita",tag:"git"},
+      {en:"branch",pl:"gałąź kodu",tag:"git"},
+      {en:"merge request / pull request",pl:"prośba o scalenie",tag:"git"},
+      {en:"conflict",pl:"konflikt w kodzie",tag:"git"},
+      {en:"push changes",pl:"wypchnąć zmiany",tag:"git"},
+      {en:"revert",pl:"cofnąć zmiany",tag:"git"},
+      {en:"review comments",pl:"uwagi z przeglądu",tag:"git"},
+      {en:"squash commits",pl:"spłaszczyć commity",tag:"git"},
+      // Zdania
+      {en:"Please resolve conflicts before merging.",pl:"Proszę rozwiązać konflikty przed scaleniem.",tag:"sentences"},
+      {en:"Could you add tests to this PR?",pl:"Czy możesz dodać testy do tego PR-a?",tag:"sentences"}
+    ]
+  },
+
+  qa_testing:{
+    icon:"🧪",
+    name:"QA & Testing",
+    desc:"ISTQB, raportowanie błędów",
+    words:[
+      {en:"test case",pl:"przypadek testowy",tag:"qa"},
+      {en:"test plan",pl:"plan testów",tag:"qa"},
+      {en:"test suite",pl:"zestaw testów",tag:"qa"},
+      {en:"bug report",pl:"raport błędu",tag:"qa"},
+      {en:"expected result",pl:"oczekiwany wynik",tag:"qa"},
+      {en:"actual result",pl:"rzeczywisty wynik",tag:"qa"},
+      {en:"severity",pl:"waga błędu",tag:"qa"},
+      {en:"priority",pl:"priorytet",tag:"qa"},
+      {en:"regression testing",pl:"testy regresyjne",tag:"qa"},
+      {en:"acceptance criteria",pl:"kryteria akceptacji",tag:"qa"},
+      // Zdania
+      {en:"The bug is reproducible with the following steps.",pl:"Błąd jest odtwarzalny przy poniższych krokach.",tag:"sentences"},
+      {en:"The fix passed all regression tests.",pl:"Poprawka przeszła wszystkie testy regresyjne.",tag:"sentences"}
+    ]
+  },
+
+  devto_300: {
+  icon: "🚀",
+  name: "English for Developers — 300 essentials",
+  desc: "pełny pakiet dev.to + praca zespołowa + komunikacja w IT",
+  words: [
+    // === CORE TECH VOCABULARY ===
+    { en: "software", pl: "oprogramowanie" },
+    { en: "hardware", pl: "sprzęt komputerowy" },
+    { en: "framework", pl: "struktura programistyczna" },
+    { en: "library", pl: "biblioteka (kod)" },
+    { en: "package manager", pl: "menedżer pakietów" },
+    { en: "dependency", pl: "zależność (pakiet)" },
+    { en: "repository", pl: "repozytorium" },
+    { en: "branch", pl: "gałąź kodu" },
+    { en: "commit", pl: "zatwierdzenie zmian" },
+    { en: "merge", pl: "scalenie kodu" },
+    { en: "pull request", pl: "prośba o scalenie" },
+    { en: "push changes", pl: "wypchnąć zmiany" },
+    { en: "version control", pl: "kontrola wersji" },
+    { en: "code review", pl: "przegląd kodu" },
+    { en: "deployment", pl: "wdrożenie" },
+    { en: "production environment", pl: "środowisko produkcyjne" },
+    { en: "staging server", pl: "serwer testowy" },
+    { en: "API endpoint", pl: "punkt końcowy API" },
+    { en: "request / response", pl: "żądanie / odpowiedź" },
+    { en: "authentication", pl: "uwierzytelnianie" },
+    { en: "authorization", pl: "autoryzacja" },
+    { en: "frontend", pl: "warstwa frontowa (widoczna dla użytkownika)" },
+    { en: "backend", pl: "warstwa serwerowa" },
+    { en: "database", pl: "baza danych" },
+    { en: "query", pl: "zapytanie (do bazy danych)" },
+    { en: "error log", pl: "dziennik błędów" },
+    { en: "runtime error", pl: "błąd w czasie działania" },
+    { en: "debugging", pl: "usuwanie błędów" },
+    { en: "performance", pl: "wydajność" },
+    { en: "scalability", pl: "skalowalność" },
+    { en: "feature", pl: "funkcjonalność" },
+    { en: "release", pl: "wydanie wersji" },
+    { en: "update", pl: "aktualizacja" },
+    { en: "rollback", pl: "przywrócenie poprzedniej wersji" },
+    { en: "build pipeline", pl: "proces kompilacji" },
+    { en: "continuous integration", pl: "ciągła integracja" },
+    { en: "continuous delivery", pl: "ciągłe wdrażanie" },
+    { en: "repository owner", pl: "właściciel repozytorium" },
+    { en: "open source contribution", pl: "wkład w projekt open source" },
+    { en: "documentation", pl: "dokumentacja" },
+    { en: "issue tracker", pl: "system zgłaszania błędów" },
+    { en: "release notes", pl: "informacje o wersji" },
+    { en: "unit test", pl: "test jednostkowy" },
+    { en: "integration test", pl: "test integracyjny" },
+    { en: "regression test", pl: "test regresyjny" },
+    { en: "mock data", pl: "dane testowe" },
+    { en: "error handling", pl: "obsługa błędów" },
+    { en: "logging", pl: "rejestrowanie zdarzeń" },
+    { en: "timeout", pl: "przekroczenie limitu czasu" },
+    { en: "config file", pl: "plik konfiguracyjny" },
+    { en: "syntax error", pl: "błąd składniowy" },
+
+    // === COLLABORATION & TEAMWORK ===
+    { en: "team meeting", pl: "spotkanie zespołu" },
+    { en: "daily stand-up", pl: "codzienne spotkanie statusowe" },
+    { en: "sprint", pl: "iteracja (w Agile)" },
+    { en: "retrospective", pl: "spotkanie podsumowujące" },
+    { en: "planning session", pl: "spotkanie planistyczne" },
+    { en: "deadline", pl: "termin" },
+    { en: "deliverable", pl: "element do dostarczenia" },
+    { en: "task assignment", pl: "przydzielenie zadania" },
+    { en: "feedback", pl: "informacja zwrotna" },
+    { en: "brainstorming", pl: "burza mózgów" },
+    { en: "collaboration", pl: "współpraca" },
+    { en: "communication", pl: "komunikacja" },
+    { en: "responsibility", pl: "odpowiedzialność" },
+    { en: "support", pl: "wsparcie" },
+    { en: "remote work", pl: "praca zdalna" },
+    { en: "workload", pl: "obciążenie pracą" },
+    { en: "performance review", pl: "ocena wyników" },
+    { en: "onboarding", pl: "wdrożenie nowego pracownika" },
+    { en: "mentor", pl: "mentor" },
+    { en: "team lead", pl: "lider zespołu" },
+
+    // === DEV.TO & BLOGGING ===
+    { en: "Great post!", pl: "Świetny wpis!" },
+    { en: "Thanks for sharing.", pl: "Dzięki za podzielenie się." },
+    { en: "This helped me a lot.", pl: "To bardzo mi pomogło." },
+    { en: "I totally agree with you.", pl: "Całkowicie się z Tobą zgadzam." },
+    { en: "Could you explain it more clearly?", pl: "Czy możesz to wyjaśnić bardziej szczegółowo?" },
+    { en: "In this tutorial, we’ll learn how to...", pl: "W tym poradniku nauczymy się, jak..." },
+    { en: "Let’s take a look at...", pl: "Przyjrzyjmy się..." },
+    { en: "Make sure you have installed...", pl: "Upewnij się, że masz zainstalowane..." },
+    { en: "Run the following command:", pl: "Uruchom następującą komendę:" },
+    { en: "Keep in mind that...", pl: "Pamiętaj, że..." },
+    { en: "This project is built with...", pl: "Ten projekt został zbudowany przy użyciu..." },
+    { en: "Here’s how it works:", pl: "Oto, jak to działa:" },
+    { en: "I recently built a small project using...", pl: "Niedawno stworzyłem mały projekt przy użyciu..." },
+    { en: "This post covers the basics of...", pl: "Ten wpis omawia podstawy..." },
+    { en: "You can customize it by editing...", pl: "Możesz to dostosować, edytując..." },
+    { en: "In my experience,", pl: "Z mojego doświadczenia," },
+    { en: "It’s important to note that...", pl: "Warto zauważyć, że..." },
+    { en: "This approach is more efficient.", pl: "To podejście jest bardziej wydajne." },
+    { en: "Let’s refactor our code.", pl: "Przebudujmy nasz kod." },
+    { en: "Feel free to leave a comment.", pl: "Śmiało, zostaw komentarz." },
+    { en: "I’m open to feedback.", pl: "Jestem otwarty na opinię." },
+    { en: "Have you tried this method?", pl: "Czy próbowałeś tej metody?" },
+    { en: "I faced a similar issue last week.", pl: "Miałem podobny problem w zeszłym tygodniu." },
+    { en: "The community is really helpful.", pl: "Społeczność jest naprawdę pomocna." },
+    { en: "I hope this article helps someone.", pl: "Mam nadzieję, że ten artykuł komuś pomoże." },
+    { en: "Let’s dive into the code.", pl: "Zanurzmy się w kodzie." },
+    { en: "Here’s my solution to this problem.", pl: "Oto moje rozwiązanie tego problemu." },
+    { en: "I’ll be happy to update the post later.", pl: "Chętnie zaktualizuję wpis później." },
+    { en: "Feel free to correct me if I’m wrong.", pl: "Popraw mnie, jeśli się mylę." },
+
+    // === DAILY COMMUNICATION ===
+    { en: "How’s it going?", pl: "Jak leci?" },
+    { en: "Good morning, team!", pl: "Dzień dobry, zespole!" },
+    { en: "Let’s start the meeting.", pl: "Zacznijmy spotkanie." },
+    { en: "Any updates from your side?", pl: "Jakieś nowości z twojej strony?" },
+    { en: "I’ll take care of it.", pl: "Zajmę się tym." },
+    { en: "That sounds good to me.", pl: "Brzmi dobrze." },
+    { en: "Let’s keep in touch.", pl: "Pozostańmy w kontakcie." },
+    { en: "Could you give me a hand?", pl: "Czy możesz mi pomóc?" },
+    { en: "No worries, I’ve got this.", pl: "Spokojnie, ogarnę to." },
+    { en: "Let’s double-check that.", pl: "Sprawdźmy to jeszcze raz." },
+    { en: "We need to fix this ASAP.", pl: "Musimy to naprawić jak najszybciej." },
+    { en: "I’m running a bit late.", pl: "Trochę się spóźnię." },
+    { en: "Please share your screen.", pl: "Udostępnij swój ekran." },
+    { en: "I’ll send you the link.", pl: "Wyślę ci link." },
+    { en: "Can you hear me?", pl: "Słychać mnie?" },
+    { en: "Let’s take a five-minute break.", pl: "Zróbmy pięć minut przerwy." },
+    { en: "I’m available after lunch.", pl: "Jestem dostępny po obiedzie." },
+    { en: "I’ll update the document.", pl: "Zaktualizuję dokument." },
+    { en: "We’re almost done.", pl: "Prawie skończyliśmy." },
+
+    // === TESTING & DEBUGGING ===
+    { en: "bug", pl: "błąd" },
+    { en: "fix", pl: "naprawić" },
+    { en: "broken feature", pl: "niedziałająca funkcja" },
+    { en: "error message", pl: "komunikat błędu" },
+    { en: "stack trace", pl: "ślad błędu (stack trace)" },
+    { en: "reproduce the issue", pl: "odtworzyć problem" },
+    { en: "expected result", pl: "oczekiwany wynik" },
+    { en: "actual result", pl: "rzeczywisty wynik" },
+    { en: "bug report", pl: "raport błędu" },
+    { en: "severity", pl: "waga błędu" },
+    { en: "priority", pl: "priorytet" },
+    { en: "steps to reproduce", pl: "kroki do odtworzenia" },
+    { en: "regression testing", pl: "testy regresyjne" },
+    { en: "unit test failed", pl: "test jednostkowy nie przeszedł" },
+    { en: "please check the logs", pl: "sprawdź logi" },
+    { en: "the app crashes on startup", pl: "aplikacja się zawiesza przy uruchomieniu" },
+    { en: "it works on my machine", pl: "u mnie działa" },
+    { en: "run the debugger", pl: "uruchom debugger" },
+    { en: "add a breakpoint", pl: "dodaj punkt przerwania" },
+    { en: "the function returns null", pl: "funkcja zwraca null" },
+
+    // === CAREER & MINDSET ===
+    { en: "I’m learning every day.", pl: "Uczę się każdego dnia." },
+    { en: "Practice makes perfect.", pl: "Trening czyni mistrza." },
+    { en: "Never stop improving.", pl: "Nigdy nie przestawaj się doskonalić." },
+    { en: "Keep pushing forward.", pl: "Idź dalej do przodu." },
+    { en: "Mistakes help us grow.", pl: "Błędy pomagają nam się rozwijać." },
+    { en: "Stay curious.", pl: "Bądź ciekawy świata." },
+    { en: "Share your knowledge.", pl: "Dziel się wiedzą." },
+    { en: "Learn from others.", pl: "Ucz się od innych." },
+    { en: "The best way to learn is to teach.", pl: "Najlepszym sposobem nauki jest nauczanie." },
+    { en: "Focus on progress, not perfection.", pl: "Skup się na postępie, nie na perfekcji." },
+    { en: "Ask for feedback.", pl: "Poproś o opinię." },
+    { en: "Take small steps every day.", pl: "Rób małe kroki każdego dnia." },
+    { en: "Coding is problem solving.", pl: "Programowanie to rozwiązywanie problemów." },
+    { en: "Teamwork makes the dream work.", pl: "Współpraca czyni cuda." },
+    { en: "Document your journey.", pl: "Dokumentuj swoją drogę." },
+    { en: "Don’t be afraid to ask questions.", pl: "Nie bój się zadawać pytań." },
+    { en: "Be kind to beginners.", pl: "Bądź życzliwy dla początkujących." },
+    { en: "Every expert was once a beginner.", pl: "Każdy ekspert był kiedyś początkującym." },
+    { en: "Celebrate small wins.", pl: "Świętuj małe sukcesy." },
+  ]
+},
+
+  toolshop_phrases: {
+  icon: "⚙️",
+  name: "Toolshop — 300 Phrases & Expressions",
+  desc: "Najczęściej używane zdania i zwroty w pracy mechanika narzędziowego",
+  words: [
+    // === CODZIENNE ZWROTY W PRACY ===
+    { en: "Good morning, team.", pl: "Dzień dobry, zespole." },
+    { en: "Let’s start with the tool inspection.", pl: "Zacznijmy od przeglądu narzędzia." },
+    { en: "Please prepare the tool for disassembly.", pl: "Proszę przygotować narzędzie do demontażu." },
+    { en: "We have to check the press alignment.", pl: "Musimy sprawdzić ustawienie prasy." },
+    { en: "This tool needs a full maintenance.", pl: "To narzędzie wymaga pełnej konserwacji." },
+    { en: "Can you bring the measurement report?", pl: "Możesz przynieść raport pomiarowy?" },
+    { en: "The tool is ready for assembly.", pl: "Narzędzie jest gotowe do montażu." },
+    { en: "Let’s clean all parts before installation.", pl: "Wyczyśćmy wszystkie części przed montażem." },
+    { en: "Be careful with the guide pins.", pl: "Uważaj na kołki prowadzące." },
+    { en: "The springs are under pressure.", pl: "Sprężyny są pod napięciem." },
+    { en: "Check the punch holder alignment.", pl: "Sprawdź ustawienie płyty stemplowej." },
+    { en: "Tighten all bolts to the correct torque.", pl: "Dokręć wszystkie śruby do odpowiedniego momentu." },
+    { en: "We are missing a dowel pin.", pl: "Brakuje kołka ustalającego." },
+    { en: "The ejector is not working properly.", pl: "Wyrzutnik nie działa prawidłowo." },
+    { en: "Replace the damaged spring.", pl: "Wymień uszkodzoną sprężynę." },
+
+    // === PRASA — OBSŁUGA I KOMUNIKACJA ===
+    { en: "Start the press in manual mode.", pl: "Uruchom prasę w trybie ręcznym." },
+    { en: "Set the stroke to 40 millimeters.", pl: "Ustaw skok na 40 milimetrów." },
+    { en: "The press cycle is too slow.", pl: "Cykl prasy jest zbyt wolny." },
+    { en: "Check the oil level in the hydraulic unit.", pl: "Sprawdź poziom oleju w układzie hydraulicznym." },
+    { en: "There is an error on the control panel.", pl: "Na panelu sterowania pojawił się błąd." },
+    { en: "The slide movement is not smooth.", pl: "Ruch suwaka nie jest płynny." },
+    { en: "Reset the safety system before continuing.", pl: "Zresetuj system bezpieczeństwa przed kontynuacją." },
+    { en: "Press is ready for production.", pl: "Prasa jest gotowa do produkcji." },
+    { en: "We need to adjust the press sensors.", pl: "Musimy wyregulować czujniki prasy." },
+    { en: "The press is overheating.", pl: "Prasa się przegrzewa." },
+    { en: "Call maintenance for assistance.", pl: "Wezwij dział utrzymania ruchu." },
+
+    // === KONSERWACJA / NAPRAWA ===
+    { en: "The tool needs lubrication.", pl: "Narzędzie wymaga nasmarowania." },
+    { en: "Replace the worn inserts.", pl: "Wymień zużyte wkładki." },
+    { en: "The guide pillar is bent.", pl: "Słupek prowadzący jest wygięty." },
+    { en: "Polish the surface of the punch.", pl: "Wypoleruj powierzchnię stempla." },
+    { en: "The stripper plate must be cleaned.", pl: "Płytę zdzieraka trzeba wyczyścić." },
+    { en: "Check for cracks on the die block.", pl: "Sprawdź, czy nie ma pęknięć w matrycy." },
+    { en: "The top plate is worn out.", pl: "Płyta górna jest zużyta." },
+    { en: "We need to regrind the cutting edge.", pl: "Trzeba przeszlifować krawędź tnącą." },
+    { en: "Apply anti-corrosion spray.", pl: "Nałóż spray antykorozyjny." },
+    { en: "Replace the broken pin.", pl: "Wymień złamany kołek." },
+    { en: "Tighten the clamp screws.", pl: "Dokręć śruby mocujące." },
+    { en: "Use a torque wrench for accuracy.", pl: "Użyj klucza dynamometrycznego dla dokładności." },
+    { en: "The ejector plate is stuck.", pl: "Płyta wyrzutnika się zacięła." },
+    { en: "The gas springs must be replaced.", pl: "Sprężyny gazowe trzeba wymienić." },
+
+    // === POMIARY I JAKOŚĆ ===
+    { en: "Check the flatness of the part.", pl: "Sprawdź płaskość części." },
+    { en: "The dimension is out of tolerance.", pl: "Wymiar jest poza tolerancją." },
+    { en: "Measure the gap with a feeler gauge.", pl: "Zmierz luz szczelinomierzem." },
+    { en: "The part is within specification.", pl: "Część mieści się w specyfikacji." },
+    { en: "Compare it with the drawing.", pl: "Porównaj to z rysunkiem." },
+    { en: "The measurement protocol is complete.", pl: "Protokół pomiarowy jest gotowy." },
+    { en: "We need to recalibrate the micrometer.", pl: "Musimy skalibrować mikrometr." },
+    { en: "Record the measurement results.", pl: "Zapisz wyniki pomiarów." },
+    { en: "This dimension must be corrected.", pl: "Ten wymiar trzeba poprawić." },
+    { en: "The tolerance range is ±0.02 mm.", pl: "Zakres tolerancji to ±0,02 mm." },
+    { en: "The visual inspection looks fine.", pl: "Oględziny wizualne wyglądają dobrze." },
+
+    // === KOMUNIKACJA Z PRODUKCJĄ ===
+    { en: "Production reported a problem with tool number 7.", pl: "Produkcja zgłosiła problem z narzędziem numer 7." },
+    { en: "We need to stop the press immediately.", pl: "Musimy natychmiast zatrzymać prasę." },
+    { en: "The part is getting scratched during stamping.", pl: "Część rysuje się podczas tłoczenia." },
+    { en: "There’s too much burr on the edge.", pl: "Na krawędzi jest zbyt duży grat." },
+    { en: "The tool has to be adjusted.", pl: "Narzędzie trzeba wyregulować." },
+    { en: "We’ll make a test stroke.", pl: "Zrobimy próbny skok." },
+    { en: "The operator noticed a strange noise.", pl: "Operator zauważył dziwny hałas." },
+    { en: "Engineering will support us with analysis.", pl: "Inżynieria pomoże nam w analizie." },
+    { en: "The issue is under investigation.", pl: "Problem jest w trakcie analizy." },
+    { en: "Let’s check the press sensors.", pl: "Sprawdźmy czujniki prasy." },
+    { en: "After the adjustment, it works correctly.", pl: "Po regulacji działa prawidłowo." },
+
+    // === DIAGNOSTYKA I AWARIE ===
+    { en: "We have a hydraulic leak.", pl: "Mamy wyciek hydrauliczny." },
+    { en: "The air pressure dropped suddenly.", pl: "Ciśnienie powietrza nagle spadło." },
+    { en: "There’s an alarm on the control screen.", pl: "Na ekranie sterowania pojawił się alarm." },
+    { en: "The tool jammed during the press cycle.", pl: "Narzędzie zablokowało się podczas cyklu prasy." },
+    { en: "A sensor is not responding.", pl: "Czujnik nie reaguje." },
+    { en: "Let’s check the electrical cabinet.", pl: "Sprawdźmy szafę elektryczną." },
+    { en: "The temperature is too high.", pl: "Temperatura jest zbyt wysoka." },
+    { en: "The press must be stopped for safety.", pl: "Prasa musi zostać zatrzymana ze względów bezpieczeństwa." },
+    { en: "We replaced the defective valve.", pl: "Wymieniliśmy wadliwy zawór." },
+    { en: "The tool is running again.", pl: "Narzędzie znów pracuje." },
+
+    // === ORGANIZACJA I RAPORTY ===
+    { en: "The maintenance report is done.", pl: "Raport z konserwacji jest gotowy." },
+    { en: "Please update the tool history.", pl: "Zaktualizuj historię narzędzia." },
+    { en: "Add the inspection date to the logbook.", pl: "Dodaj datę przeglądu do dziennika." },
+    { en: "The replacement parts are ordered.", pl: "Części zamienne zostały zamówione." },
+    { en: "The tool is waiting for grinding.", pl: "Narzędzie czeka na szlifowanie." },
+    { en: "We’ll send the tool to external service.", pl: "Wyślemy narzędzie do serwisu zewnętrznego." },
+    { en: "Production can restart after confirmation.", pl: "Produkcja może ruszyć po potwierdzeniu." },
+    { en: "Everything is documented in the report.", pl: "Wszystko jest udokumentowane w raporcie." },
+    { en: "Next inspection is planned for Friday.", pl: "Kolejny przegląd zaplanowany na piątek." },
+  ],
+
+    
+},
+
+
+};
+
+/* ===================== USTAWIENIA/STATE ===================== */
+const THEME_KEY="led_theme_v2";
+const pkgSelect = document.getElementById('package');
+const dirSel = document.getElementById('direction');
+let current = localStorage.getItem("led_pkg_key") || "devto_general";
+let direction = localStorage.getItem("led_direction") || "EN2PL";
+let mode = "flash"; // flash|quiz|stats
+
+function k(s){return `led_${current}_${s}`;}
+
+function loadAll(){
+  const savedWords = JSON.parse(localStorage.getItem(k("words"))||"null");
+  const words = savedWords?.length ? savedWords : packages[current].words.map(w=>({...w,known:false}));
+  const stats = JSON.parse(localStorage.getItem(k("stats"))||"{}");
+  const history = JSON.parse(localStorage.getItem(k("history"))||"[]"); // [{ts,mode,correct,total,secs}]
+  localStorage.setItem(k("words"),JSON.stringify(words));
+  return {words,stats,history};
+}
+function saveAll(){ localStorage.setItem(k("words"),JSON.stringify(words)); localStorage.setItem(k("stats"),JSON.stringify(stats)); localStorage.setItem(k("history"),JSON.stringify(history)); }
+
+let {words,stats,history} = loadAll();
+let cursor = 0;
+
+/* ===================== UI: motyw, pakiety, tagi ===================== */
+(function initTheme(){
+  const t = localStorage.getItem(THEME_KEY)||"dark";
+  document.body.classList.toggle("light", t==="light");
+  document.getElementById('t-light').checked = t==="light";
+  document.getElementById('t-dark').checked  = t!=="light";
+  document.getElementById('t-light').addEventListener('change',()=>{localStorage.setItem(THEME_KEY,"light");document.body.classList.add("light");});
+  document.getElementById('t-dark').addEventListener('change',()=>{localStorage.setItem(THEME_KEY,"dark");document.body.classList.remove("light");});
+})();
+
+(function initPackages(){
+  pkgSelect.innerHTML = "";
+  for(const [key,p] of Object.entries(packages)){
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = `${p.icon} ${p.name} — ${p.desc}`;
+    if(key===current) opt.selected = true;
+    pkgSelect.appendChild(opt);
+  }
+  pkgSelect.addEventListener('change', ()=>{
+    current = pkgSelect.value;
+    localStorage.setItem("led_pkg_key", current);
+    const all = loadAll(); words=all.words; stats=all.stats; history=all.history; cursor=0;
+    renderTags(); renderList(); updateKPI(); renderDailySpark(); showFlash();
+  });
+})();
+
+function uniqueTags(){ return [...new Set(words.map(w=>w.tag))]; }
+function renderTags(){
+  const tags = uniqueTags();
+  const box = document.getElementById('tags');
+  box.innerHTML = `<div class="small">Filtr tagów:</div>` + ['*',...tags].map(t=>`<button class="tab" data-tag="${t}">${t==='*'?'Wszystkie':t}</button>`).join(' ');
+}
+function renderList(filter=null){
+  const list = document.getElementById('list');
+  const items = words
+    .filter(w=>!filter || filter==='*' || w.tag===filter)
+    .sort((a,b)=> a.en.localeCompare(b.en));
+  list.innerHTML = items.map((w,i)=>`<div class="tag ${w.known?'known':''}" data-idx="${i}">${w.en} — ${w.pl}</div>`).join('');
+}
+
+/* ===================== KPI + Statystyki dzienne (spark) ===================== */
+function updateKPI(){
+  const known = words.filter(w=>w.known).length;
+  document.getElementById('k-known').textContent = known;
+  document.getElementById('k-left').textContent  = words.length - known;
+  const acc = stats.correct && stats.total ? Math.round(100*stats.correct/stats.total) : 0;
+  document.getElementById('k-acc').textContent   = acc + "%";
+  document.getElementById('k-week').textContent  = sessionsLastDays(7).length;
+}
+function dayKey(d=new Date()){return d.toISOString().slice(0,10);}
+function sessionsLastDays(n){
+  const out = []; const now = new Date();
+  for(let i=0;i<n;i++){
+    const d = new Date(now); d.setDate(now.getDate()-i);
+    const k = d.toISOString().slice(0,10);
+    const day = history.filter(h=>h.day===k);
+    out.push({day:k,count:day.length});
+  }
+  return out.reverse();
+}
+function renderDailySpark(){
+  const spark = document.getElementById('spark'); spark.innerHTML="";
+  const arr = sessionsLastDays(7);
+  const max = Math.max(1,...arr.map(a=>a.count));
+  for(const a of arr){
+    const bar = document.createElement('div');
+    bar.className='bar';
+    bar.style.height = (a.count/max*100)+'%';
+    bar.title = `${a.day}: ${a.count} sesji`;
+    spark.appendChild(bar);
+  }
+}
+
+/* ===================== FISZKI ===================== */
+function setDirection(dir){ direction=dir; localStorage.setItem("led_direction",dir); if(mode==='flash') renderCard(); }
+function poolUnknown(){ return words.filter(w=>!w.known); }
+function nextIndex(){
+  const pool = mode==='flash' ? poolUnknown() : words;
+  if(pool.length===0) return -1;
+  const idx = Math.floor(Math.random()*pool.length);
+  // mapujemy na indeks globalny
+  return words.indexOf(pool[idx]);
+}
+function promptText(w){
+  if(direction==="PL2EN") return w.pl;
+  if(direction==="MIX") return Math.random()<0.5?w.en:w.pl;
+  return w.en;
+}
+function answerText(w,prompt){ return (prompt===w.en)? w.pl : w.en; }
+
+function renderCard(){
+  if(cursor<0 || !words.length){ 
+    document.getElementById('card-word').textContent="—"; 
+    document.getElementById('card-translation').innerHTML="&nbsp;";
+    document.getElementById('card-example').innerHTML="&nbsp;";
+    return;
+  }
+  const w = words[cursor];
+  const prompt = promptText(w);
+  document.getElementById('card-word').textContent = prompt;
+  document.getElementById('card-translation').innerHTML="&nbsp;";
+  const ex = w.exEN && w.exPL ? (direction==="PL2EN" ? `${w.exPL} → ${w.exEN}` : `${w.exEN} → ${w.exPL}`) :
+            (w.tag==="sentences" ? "Ćwicz całe zdanie — zwróć uwagę na szyk." : "Brak przykładowego zdania.");
+  document.getElementById('card-example').textContent = ex;
+}
+
+function showFlash(){
+  mode='flash';
+  document.getElementById('view-flash').style.display='';
+  document.getElementById('view-quiz').style.display='none';
+  document.getElementById('view-stats').style.display='none';
+  document.getElementById('tab-flash').classList.add('active');
+  document.getElementById('tab-quiz').classList.remove('active');
+  document.getElementById('tab-stats').classList.remove('active');
+  cursor = nextIndex();
+  renderCard();
+}
+
+/* ===================== QUIZ ABCD ===================== */
+let quizState=null; // {q:{}, options:[], correct, answered}
+function makeQuestion(){
+  const q = words[Math.floor(Math.random()*words.length)];
+  const prompt = Math.random()<0.5 ? q.en : q.pl;
+  const correct = (prompt===q.en)? q.pl : q.en;
+  const wrongs = words.filter(w=>w!==q).sort(()=>Math.random()-0.5).slice(0,3)
+                      .map(w => (prompt===q.en? w.pl : w.en));
+  const options = [correct, ...wrongs].sort(()=>Math.random()-0.5);
+  return {q,prompt,options,correct};
+}
+function showQuiz(){
+  mode='quiz';
+  document.getElementById('view-flash').style.display='none';
+  document.getElementById('view-quiz').style.display='';
+  document.getElementById('view-stats').style.display='none';
+  document.getElementById('tab-flash').classList.remove('active');
+  document.getElementById('tab-quiz').classList.add('active');
+  document.getElementById('tab-stats').classList.remove('active');
+  ask();
+}
+function ask(seriesLeft=null){
+  quizState = makeQuestion();
+  document.getElementById('quiz-q').textContent = (quizState.prompt===quizState.q.en)
+    ? `Co znaczy: “${quizState.q.en}”?` : `Jak po angielsku: “${quizState.q.pl}”?`;
+  const box = document.getElementById('quiz-choices'); box.innerHTML="";
+  document.getElementById('quiz-feedback').textContent="";
+  quizState.options.forEach(text=>{
+    const div = document.createElement('div'); div.className='choice'; div.textContent=text;
+    div.onclick = ()=>{
+      stats.total = (stats.total||0)+1;
+      const ok = text===quizState.correct;
+      if(ok){ stats.correct = (stats.correct||0)+1; div.classList.add('correct'); }
+      else { div.classList.add('wrong'); document.getElementById('quiz-feedback').textContent=`Poprawnie: ${quizState.correct}`; }
+      saveAll(); updateKPI();
+    };
+    box.appendChild(div);
+  });
+  document.getElementById('quiz-progress').textContent = seriesLeft!=null ? `Seria: pozostało ${seriesLeft}` : '';
+}
+function runSeries(n){
+  let left = n;
+  const step = ()=>{
+    if(left<=0){
+      pushHistory('quiz', n, n, 0); // zapis ogólny serii (szczegóły już w stats)
+      renderStatsView();
+      return;
+    }
+    ask(left);
+    left--;
+    // automatyczne przejście po odpowiedzi użytkownika: zostawiamy przycisk "Następne pytanie"
+  };
+  step();
+  document.getElementById('quiz-next').onclick = step;
+}
+
+/* ===================== HISTORIA / STATYSTYKI ===================== */
+function pushHistory(mode, correct, total, secs){
+  const rec = {mode, correct, total, secs, day:dayKey(), ts:Date.now()};
+  history.unshift(rec);
+  history = history.slice(0, 100); // limit
+  saveAll();
+}
+function renderStatsView(){
+  mode='stats';
+  document.getElementById('view-flash').style.display='none';
+  document.getElementById('view-quiz').style.display='none';
+  document.getElementById('view-stats').style.display='';
+  document.getElementById('tab-flash').classList.remove('active');
+  document.getElementById('tab-quiz').classList.remove('active');
+  document.getElementById('tab-stats').classList.add('active');
+
+  const acc = stats.total ? Math.round(100* (stats.correct||0) / stats.total) : 0;
+  const known = words.filter(w=>w.known).length;
+  const html = `
+    <div>📦 Pakiet: <strong>${packages[current].name}</strong> — ${packages[current].desc}</div>
+    <div>📊 Skuteczność: <strong class="${acc>=70?'goodtxt':'badtxt'}">${acc}%</strong> ( ${stats.correct||0} / ${stats.total||0} )</div>
+    <div>🧠 Nauczone słowa: <strong>${known}</strong> / ${words.length}</div>
+  `;
+  document.getElementById('stats-summary').innerHTML = html;
+
+  // spark
+  renderDailySpark();
+
+  // historia
+  const histBox = document.getElementById('history');
+  if(!history.length){ histBox.innerHTML = `<div class="small">Brak historii w tym pakiecie.</div>`; }
+  else{
+    const rows = history.slice(0,30).map(h=>{
+      const a = Math.round(h.total? 100*h.correct/h.total : 0);
+      const date = new Date(h.ts).toLocaleString();
+      return `<div class="tag">[${date}] ${h.mode.toUpperCase()} — wynik: ${h.correct}/${h.total} (${a}%)</div>`;
+    }).join('');
+    histBox.innerHTML = rows;
+  }
+}
+
+/* ===================== ZDARZENIA ===================== */
+document.getElementById('tab-flash').onclick = showFlash;
+document.getElementById('tab-quiz').onclick  = showQuiz;
+document.getElementById('tab-stats').onclick = renderStatsView;
+
+document.getElementById('shuffle').onclick = ()=>{ words.sort(()=>Math.random()-0.5); saveAll(); renderList(); if(mode==='flash') renderCard(); };
+document.getElementById('reset').onclick   = ()=>{
+  if(confirm("Zerować status nauki i statystyki bieżącego pakietu?")){
+    words = packages[current].words.map(w=>({...w,known:false}));
+    stats = {}; history = [];
+    saveAll(); renderList(); updateKPI(); renderDailySpark(); if(mode==='flash') showFlash(); else renderStatsView();
+  }
+};
+
+document.getElementById('direction').value = direction;
+document.getElementById('direction').addEventListener('change', e=> setDirection(e.target.value));
+
+document.getElementById('show').onclick = ()=>{
+  const w = words[cursor]; if(!w) return;
+  const prompt = document.getElementById('card-word').textContent;
+  document.getElementById('card-translation').textContent = answerText(w, prompt);
+};
+
+document.getElementById('hint').onclick = ()=>{
+  const w = words[cursor]; if(!w) return;
+  const ex = w.exEN && w.exPL ? (direction==="PL2EN" ? `${w.exPL} → ${w.exEN}` : `${w.exEN} → ${w.exPL}`) :
+            (w.tag==="sentences" ? "Ćwicz całe zdanie — zwróć uwagę na szyk." : "Brak przykładowego zdania.");
+  document.getElementById('card-example').textContent = ex;
+};
+
+document.getElementById('know').onclick = ()=>{
+  const w = words[cursor]; if(!w) return;
+  w.known = true; saveAll(); updateKPI();
+  cursor = nextIndex(); if(cursor<0){ document.getElementById('card-word').textContent="🎉 Wszystko nauczone!"; document.getElementById('card-translation').textContent=""; return; }
+  renderCard();
+};
+
+document.getElementById('next').onclick = ()=>{
+  cursor = nextIndex(); if(cursor<0){ document.getElementById('card-word').textContent="🎉 Wszystko nauczone!"; document.getElementById('card-translation').textContent=""; return; }
+  renderCard();
+};
+
+document.getElementById('quiz-next').onclick = ()=> ask();
+document.getElementById('quiz-10').onclick = ()=> runSeries(10);
+document.getElementById('quiz-20').onclick = ()=> runSeries(20);
+
+document.getElementById('tags').addEventListener('click', (e)=>{
+  const t = e.target?.dataset?.tag; if(!t) return;
+  renderList(t);
+});
+
+document.getElementById('list').addEventListener('click', (e)=>{
+  const el = e.target.closest('.tag'); if(!el) return;
+  const i = +el.dataset.idx; if(Number.isNaN(i)) return;
+  words[i].known = !words[i].known; saveAll(); renderList(); updateKPI();
+});
+
+/* ===================== START ===================== */
+(function start(){
+  // domyślny motyw
+  const t = localStorage.getItem(THEME_KEY)||"dark";
+  document.getElementById('t-light').checked = t==="light";
+  document.getElementById('t-dark').checked  = t!=="light";
+  // KPI/lista/tags
+  renderTags(); renderList(); updateKPI(); renderDailySpark();
+  // tryb startowy
+  showFlash();
+})();
+</script>
 </body>
 </html>
